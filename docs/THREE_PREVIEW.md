@@ -43,3 +43,5 @@ Shared-workspace evidence: `deliverables/rehearsal-3d-verification/` and `delive
 ## Separate-service plan
 
 The deployed preview uses the explicit separate service `rehearsal-3d-preview`; the prior service and packet were not replaced. Keep selecting the approved project and this service using `GCP_SERVICE` for future preview deployments. Draft PR #2 targets the prior submission branch for focused review; main remains unmerged.
+
+During final read-only reconciliation, Antigravity's main advanced to `46679971857e5e8df11c85e7ebccf709a3f7a5ca` with D3 statistical charts and changes to `main.ts`, Canvas rendering, styles and package metadata. This 3D preview does not incorporate that new commit. Review the 3D direction first; integrate the current statistics work separately rather than replacing it with this preview branch.
