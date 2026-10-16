@@ -26,7 +26,7 @@ export default defineConfig(() => {
     plugins: [tailwindcss(), thousandStoresApiPlugin()],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "."),
+        "@": path.resolve(import.meta.dirname, "."),
       },
     },
     server: {

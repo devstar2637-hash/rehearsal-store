@@ -1432,12 +1432,10 @@ button:disabled {
   }
   .rea-two-col,
   .rea-rule-strip,
-  .compare,
-  .tenk-body {
+  .compare {
     grid-template-columns: 1fr;
   }
-  .rea-fine-bar,
-  .tenk-kpi-strip {
+  .rea-fine-bar {
     grid-template-columns: repeat(2, 1fr);
   }
   .pgrun-hint {
@@ -1781,3 +1779,25 @@ button:disabled {
 
 
 
+/* Keep the engine evidence distinct from illustrative spatial telemetry. */
+.tenk-engine-note,
+.tenk-engine-status {
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.tenk-engine-status { font-family: "JetBrains Mono", monospace; }
+
+/* These overrides follow the matrix base rules so narrow screens stay usable. */
+@media (max-width: 1100px) {
+  .tenk-body { grid-template-columns: minmax(0, 1fr); }
+  .tenk-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tenk-mode-tabs { flex-wrap: wrap; }
+  .tenk-canvas-wrap, .tenk-inspector, .tenk-kpi-card { min-width: 0; }
+}
+@media (max-width: 768px) {
+  .tenk-command-shell { padding: 14px 10px; }
+  .tenk-insp-head { flex-wrap: wrap; }
+  #tenKWaferCanvas { scroll-margin-top: 160px; }
+}

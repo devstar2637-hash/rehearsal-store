@@ -936,7 +936,7 @@ export class ThreeFloorplanStage {
       ? this.accentHex
       : t.textPrimary;
     ctx.font = "700 30px 'Plus Jakarta Sans', 'JetBrains Mono', sans-serif";
-    const label = obs.label || obs.koLabel;
+    const label = obs.label || obs.koLabel || obs.id;
     ctx.fillText(label, 22, 54);
 
     ctx.fillStyle = t.textMuted;
@@ -987,7 +987,7 @@ export class ThreeFloorplanStage {
     ctx.fillStyle =
       isPrimary && isBlocked ? "#ffffff" : t.textPrimary;
     ctx.font = "700 25px 'Plus Jakarta Sans', 'JetBrains Mono', sans-serif";
-    ctx.fillText(obs.label || obs.koLabel, 18, 46);
+    ctx.fillText(obs.label || obs.koLabel || obs.id, 18, 46);
 
     ctx.fillStyle =
       isPrimary && isBlocked ? "rgba(255,255,255,0.9)" : t.textMuted;

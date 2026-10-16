@@ -20,6 +20,7 @@ import {
   type TenKClusterItem,
 } from "./engine/d3StatsCharts.ts";
 import { ThreeFloorplanStage } from "./engine/threeFloorplanStage.ts";
+import { summarizeBackendRun } from "./engine/backendSync.ts";
 import {
   createTenKMatrixEngine,
   type StoreRunCell,
@@ -690,7 +691,10 @@ function mountShell(): void {
                   <i class="tenk-pulse-dot"></i>
                   <span id="tenKExecCounter">10,000 / 10,000 PARALLEL RUNS</span>
                 </span>
-                <h2>10,000-Scenario Real-Time Monte Carlo Wafer Matrix (100×100 Stores)</h2>
+                <h2>10,000-Scenario Wafer Matrix (100×100 Stores)</h2>
+                <p class="tenk-engine-note">Spatial preview [assumed]: cell economics and trajectory packets are illustrative. Verified 36-month engine results are reported separately below.</p>
+                <div class="tenk-engine-status" role="status" id="backendEngineStatus">Connecting to the 36-month engine…</div>
+                <button type="button" class="tenk-mode-btn" id="refreshBackendEngineBtn">Run 36-month engine</button>
               </div>
               <div class="tenk-controls-group">
                 <div class="tenk-mode-tabs" role="tablist" aria-label="10,000 Wafer Matrix View Mode">
@@ -3131,31 +3135,30 @@ function initStudio(): void {
 
 initStudio();
 
-// Connect to real 10,000-run 36-month survival engine (/api/default & /api/rehearse)
-async function syncWithBackendEngine(): Promise<void> {
+async function syncWithBackendEngine(rerun = false): Promise<void> {
+  const status = document.getElementById("backendEngineStatus");
+  const button = document.getElementById("refreshBackendEngineBtn") as HTMLButtonElement | null;
+  if (button) button.disabled = true;
+  if (status) status.textContent = rerun ? "Running the 36-month engine…" : "Loading engine results…";
   try {
-    const res = await fetch("/api/default");
-    if (!res.ok) return;
-    const data = await res.json();
-    const meta = data?.meta;
-    const summary = data?.run?.summary || data?.summary;
-    if (meta && meta.totalRuns) {
-      const total = meta.totalRuns || 10000;
-      const surv =
-        summary?.survivedRuns ??
-        Math.round((summary?.overallSurvivalRate ?? 0.842) * total);
-      const badge = document.getElementById("heroScenarioTotal");
-      if (badge) {
-        badge.textContent = `${surv.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} Store Scenarios Survived (36-Mo Engine)`;
-      }
-      const subEl = document.getElementById("tenKKpiExecSub");
-      if (subEl) {
-        subEl.textContent = `${meta.designCount ?? 500} AI Design Families × ${meta.scenarioCount ?? 20} Stress Variants (${meta.horizonMonths ?? 36}Mo Synced)`;
-      }
-    }
+    const res = await fetch(rerun ? "/api/rehearse" : "/api/summary", {
+      method: rerun ? "POST" : "GET",
+      headers: rerun ? { "Content-Type": "application/json" } : undefined,
+      body: rerun ? JSON.stringify({ mode: 10000 }) : undefined,
+      cache: "no-store",
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!res.ok) throw new Error("Engine returned HTTP " + res.status);
+    const summary = summarizeBackendRun(await res.json());
+    if (status) status.textContent =
+      `36-month engine [computed · ${summary.replay ? "cached replay" : "fresh run"}]: ${summary.survived.toLocaleString("en-US")} / ${summary.total.toLocaleString("en-US")} completed scenarios · ${summary.runId}`;
   } catch {
-    // Fallback to client-side simulation engine when static
+    if (status) status.textContent = "36-month backend unavailable. Spatial preview remains illustrative; no live engine result is claimed.";
+  } finally {
+    if (button) button.disabled = false;
   }
 }
+document.getElementById("refreshBackendEngineBtn")?.addEventListener("click", () => {
+  void syncWithBackendEngine(true);
+});
 void syncWithBackendEngine();
-

@@ -8,6 +8,15 @@ import { buildRunCsv } from "./src/format.ts";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const DEFAULT_ENGINE_BASE_URL =
+  "https://thousand-stores-299086406033.asia-northeast3.run.app";
+const ENGINE_TIMEOUT_MS = 20_000;
+
+export interface EngineProxyOptions {
+  engineBaseUrl?: string;
+  timeoutMs?: number;
+}
+
 export interface EngineRunner {
   engineRun?: (
     input: unknown,
@@ -122,14 +131,87 @@ function sendJson(
   res.end(body);
 }
 
+async function proxyEngineRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  requestUrl: URL,
+  upstreamPath: string,
+  options: EngineProxyOptions
+): Promise<void> {
+  let signal: AbortSignal | undefined;
+  try {
+    const upstreamUrl = new URL(
+      upstreamPath,
+      options.engineBaseUrl ?? process.env.ENGINE_BASE_URL ?? DEFAULT_ENGINE_BASE_URL
+    );
+    upstreamUrl.search = requestUrl.search;
+    if (req.method === "POST") {
+      upstreamUrl.searchParams.set("summary", "1");
+    }
+
+    const headers = new Headers();
+    for (const name of ["accept", "content-type"]) {
+      const value = req.headers[name];
+      if (typeof value === "string") headers.set(name, value);
+    }
+
+    let body: Buffer<ArrayBuffer> | undefined;
+    if (req.method === "POST") {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(chunk);
+      body = Buffer.concat(chunks);
+    }
+
+    signal = AbortSignal.timeout(options.timeoutMs ?? ENGINE_TIMEOUT_MS);
+    const upstream = await fetch(upstreamUrl, {
+      method: req.method,
+      headers,
+      body,
+      signal,
+      redirect: "manual",
+    });
+    // Buffer before committing the status so incomplete upstream bodies become 503s.
+    const responseBody = Buffer.from(await upstream.arrayBuffer());
+    const responseHeaders: Record<string, string> = {
+      "Cache-Control": "no-store",
+    };
+    const contentType = upstream.headers.get("content-type");
+    if (contentType) responseHeaders["Content-Type"] = contentType;
+    const location = upstream.headers.get("location");
+    if (location) responseHeaders.Location = location;
+    res.writeHead(upstream.status, responseHeaders);
+    res.end(responseBody);
+  } catch {
+    sendJson(res, 503, {
+      error: signal?.aborted
+        ? "Engine upstream timed out. No replay fallback was used."
+        : "Engine upstream unavailable. No replay fallback was used.",
+    });
+  }
+}
+
 export async function handleApiRequest(
   req: IncomingMessage,
-  res: ServerResponse
+  res: ServerResponse,
+  options: EngineProxyOptions = {}
 ): Promise<boolean> {
-  ensureSeededStore();
   const method = req.method ?? "GET";
   const parsedUrl = new URL(req.url ?? "/", "http://localhost");
   const pathname = parsedUrl.pathname;
+
+  const upstreamPath =
+    method === "GET" &&
+    ["/api/default", "/api/summary", "/api/health"].includes(pathname)
+      ? pathname
+      : method === "POST" && pathname === "/api/rehearse"
+        ? "/api/run"
+        : undefined;
+  if (upstreamPath) {
+    await proxyEngineRequest(req, res, parsedUrl, upstreamPath, options);
+    return true;
+  }
+
+  ensureSeededStore();
 
   // POST /run -> { runId }
   if (method === "POST" && pathname === "/run") {
@@ -175,44 +257,6 @@ export async function handleApiRequest(
     return true;
   }
 
-  // GET /api/default -> 10,000-scenario Monte Carlo summary for live Wafer Matrix sync
-  if (method === "GET" && pathname === "/api/default") {
-    const sample = loadSampleResult();
-    sendJson(res, 200, {
-      run: sample,
-      meta: {
-        totalRuns: 10000,
-        designCount: 500,
-        scenarioCount: 20,
-        horizonMonths: 36,
-      },
-    });
-    return true;
-  }
-
-  // POST /api/rehearse -> 10,000-scenario live rehearsal endpoint
-  if (method === "POST" && pathname === "/api/rehearse") {
-    try {
-      const body = await readJsonBody(req);
-      const seed = typeof body.seed === "number" ? body.seed : 20261016;
-      const result = await invokeEngineOrReplay(body, seed, 10000);
-      sendJson(res, 200, {
-        run: result,
-        meta: {
-          totalRuns: 10000,
-          designCount: 500,
-          scenarioCount: 20,
-          horizonMonths: 36,
-        },
-      });
-    } catch (err) {
-      sendJson(res, 503, {
-        error: err instanceof Error ? err.message : "Engine busy",
-      });
-    }
-    return true;
-  }
-
   return false;
 }
 
@@ -226,9 +270,9 @@ const MIME_TYPES: Record<string, string> = {
   ".ico": "image/x-icon",
 };
 
-export function createWebServer(): http.Server {
+export function createWebServer(options: EngineProxyOptions = {}): http.Server {
   return http.createServer(async (req, res) => {
-    const handled = await handleApiRequest(req, res);
+    const handled = await handleApiRequest(req, res, options);
     if (handled) return;
 
     const parsedUrl = new URL(req.url ?? "/", "http://localhost");
