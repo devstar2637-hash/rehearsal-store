@@ -1,10 +1,10 @@
-# A Thousand Stores (천 개의 가게) — `web/`
+# A Thousand Stores — Store Design Rehearsal & Spatial Stress-Testing Studio
 
-Run: npm install, npm run dev, open http://localhost:5173; the app loads sample_result.json as a replay when no engine is present.
+Run: `npm install`, `npm run dev`, open `http://localhost:3000`.
 
-## Architecture & Handoff
-- **Data Contract**: `shared/types.ts` (frozen at 12:15 KST; re-exported via `src/types.ts`).
-- **6 Screens + Sticky Status Bar**: `src/statusBar.ts`, `src/screens/input.ts`, `src/screens/landscape.ts`, `src/screens/cliff.ts`, `src/screens/nextMeasurement.ts`, `src/screens/rounds.ts`, `src/screens/decision.ts`.
-- **Charts & Formatting**: `uPlot` scatter in `src/screens/landscape.ts` (survivors highlighted, colored by `failureFamily`, `nonDominated` outlined); zero client-side money calculation in `src/format.ts`.
+## Architecture & Core Modules
+- **3D Spatial Floorplan Internals (`src/engine/threeFloorplanStage.ts`)**: Interactive Three.js WebGL rotatable store floorplan with 16-slot LED queue buffer bars, 24-cell shared walkway sensor matrix, real-time customer agents, and CAD dimension rulers.
+- **2.5D Isometric & 2D CAD Blueprint (`src/engine/canvasRenderer.ts`)**: Dual Baseline vs. Proposed floorplan comparison with 360° orbit, congestion heatmap, lighting, and HVAC airflow overlays.
+- **10,000-Store Monte Carlo & Telemetry (`src/engine/d3StatsCharts.ts`)**: D3.js survival distribution chart across 6 operational scenarios and 6 real-time KPI sparklines.
+- **Discrete-Event Simulation Core (`src/engine/rehearsalCore.ts`)**: Seeded A* pathfinding, queue buffer dynamics, and spatial clearance validation.
 - **Server Endpoints (`server.ts`, Node 20 `node:http`)**: `POST /run` → `{ runId }`, `GET /runs/:id` → `{ result: RunResult }`, `GET /runs/:id/export?format=csv`.
-- **Engine Wiring**: Calls `engineRun(input, seed, n)` from `../engine/index.js` (or `runOrchestration` from `../engine/orchestrator.js`) and falls back to `public/sample_result.json` (`replay: true`) when absent.
