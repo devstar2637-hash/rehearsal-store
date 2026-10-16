@@ -13,6 +13,7 @@ import {
   unproject,
   type IsoView,
 } from "./engine/canvasRenderer.ts";
+import { mountAsciiBackground } from "./ui/asciiBackground.ts";
 
 declare global {
   interface Window {
@@ -307,13 +308,14 @@ const state: StudioState = {
 function mountShell(): void {
   const root = document.getElementById("root")!;
   root.innerHTML = `
+    <canvas id="ambientAscii" aria-hidden="true"></canvas>
     <div class="spatial-app">
       <!-- TOP COMPACT HOUSE-CONTROL COMMAND BAR -->
       <header class="hc-topbar">
         <div class="hc-brand-group">
-          <a href="#top" class="wordmark">Rehearsal<span>.</span></a>
+          <a href="#top" class="wordmark" aria-label="Rehearsal 공간 운영 스튜디오"><svg class="brand-symbol" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5v5"/></svg>Rehearsal<span>.</span><small>SPATIAL STUDIO</small></a>
           <div class="hc-addr-pill">
-            <span class="hc-pin">📍</span>
+            <svg class="ui-icon hc-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
             <input
               id="addressInput"
               type="text"
@@ -343,21 +345,17 @@ function mountShell(): void {
           </div>
         </div>
 
-        <!-- 4 STARTUP CATEGORY PILLS (NO WALL OF TEXT) -->
-        <div class="hc-cat-tabs" id="categoryGrid" role="group" aria-label="추천 창업 카테고리"></div>
-
         <!-- RIGHT ACTIONS & SCENARIO SURVIVAL COUNTER -->
         <div class="hc-right-group">
-          <div class="hc-survival-badge tabular" id="heroScenarioTotal">
-            1,000개 중 842개 생존
-          </div>
           <button type="button" class="hc-btn" id="openDrawerBtn">
-            📷 도면 업로드 · 세부설정
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>도면 · 세부 설정
           </button>
           <button type="button" class="hc-btn primary" id="exportBtn">
-            📄 계획서 저장
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 15v6h16v-6"/></svg>계획서 저장
           </button>
         </div>
+        <div class="hc-cat-tabs" id="categoryGrid" role="group" aria-label="추천 창업 카테고리"></div>
+        <div class="hc-survival-badge tabular" id="heroScenarioTotal">고정 예시 · 미검증 842/1,000</div>
       </header>
 
       <!-- SUB-TOOLBAR: DESIGN THEME + HOUSE-CONTROL ENV TOGGLES + SCENARIO DECK -->
@@ -375,7 +373,8 @@ function mountShell(): void {
           </div>
         </div>
 
-        <div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="1,000개 시나리오 프리셋"></div>
+        <div class="hc-scenario-caption">운영 프리셋 <span>표시된 개수는 고정 예시 · 미검증</span></div>
+        <div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="고정 예시 · 미검증 시나리오 프리셋"></div>
       </div>
 
       <!-- MAIN SPATIAL 3D FLOORPLAN STAGE -->
@@ -521,7 +520,7 @@ function mountShell(): void {
 
           <div class="hc-insight-pill" id="insight" aria-live="polite">
             <strong>대기 87초 단축 · +20명 더 판매</strong>
-            <span class="muted">1,000개 시나리오 검증 완료</span>
+            <span class="muted">고정 예시 · 미검증</span>
           </div>
           <span class="hidden" id="calcBadge" role="status"></span>
         </div>
@@ -737,7 +736,7 @@ function buildCrewPlanText(): string {
     `[Rehearsal 창업 도면 & 시뮬레이션 리포트]`,
     `• 주소: ${state.address} | 자본금: ${formatShortWon(state.budgetManWon)}`,
     `• 업종: ${cat.title} (초기 ${formatShortWon(cat.setupCostManWon)}) | 디자인: ${des.name}`,
-    `• 시나리오: ${cat.scenarioTotal}개 중 ${cat.survivedCount}개 생존`,
+    `• 시나리오 (고정 예시 · 미검증): ${cat.scenarioTotal}개 중 ${cat.survivedCount}개 생존`,
     `• 선택 가구(${o.koLabel || o.label}): X=${o.x.toFixed(1)}m, Y=${o.y.toFixed(1)}m`,
     `• 평균 대기: ${round(observed(b), 1)}초 → ${round(observed(r), 1)}초`,
     `• 10분 완료: ${b.completed}명 → ${r.completed}명`,
@@ -746,6 +745,8 @@ function buildCrewPlanText(): string {
 
 function initStudio(): void {
   mountShell();
+  const disposeAmbient = mountAsciiBackground(document.getElementById("ambientAscii") as HTMLCanvasElement);
+  import.meta.hot?.dispose(disposeAmbient);
 
   const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
     document.getElementById(id) as T;
@@ -834,7 +835,7 @@ function initStudio(): void {
       return `
         <button type="button" id="${btnId}" class="hc-scn-chip ${
         active ? "active" : ""
-      }" data-scn-id="${s.id}">
+      }" data-scn-id="${s.id}" aria-label="${s.title}, 고정 예시 ${s.countLabel}, 미검증">
           <span>${s.title}</span>
           <small class="tabular">${s.countLabel}</small>
         </button>
@@ -852,8 +853,11 @@ function initStudio(): void {
   function syncControls(): void {
     const cat = getActiveCategory();
     const des = getActiveDesign();
+    for (const id of ["jsonBtn", "exportBtn", "previewPlanBtn"]) {
+      $<HTMLButtonElement>(id).disabled = state.dirty || !state.results;
+    }
     $("budgetDisplayLabel").textContent = formatShortWon(state.budgetManWon);
-    $("heroScenarioTotal").textContent = `1,000개 중 ${cat.survivedCount}개 생존`;
+    $("heroScenarioTotal").textContent = `고정 예시 · 미검증 ${cat.survivedCount}/1,000`;
 
     const reserve = state.budgetManWon - cat.setupCostManWon;
     $("budgetRemainBanner").textContent =
@@ -952,6 +956,7 @@ function initStudio(): void {
   function recompute(): void {
     window.clearTimeout(debounce);
     state.dirty = true;
+    syncControls();
     state.rev++;
     state.players = [
       { ...state.base.entrance },
@@ -1035,12 +1040,14 @@ function initStudio(): void {
       const msg = err instanceof Error ? err.message : String(err);
       window.__errors.push(msg);
       state.results = null;
+      syncControls();
       drawAll();
     }
   }
 
   function queueRecompute(): void {
     state.dirty = true;
+    syncControls();
     window.clearTimeout(debounce);
     debounce = window.setTimeout(recompute, 50);
     drawAll();
@@ -1461,17 +1468,16 @@ function initStudio(): void {
   }
 
   $("jsonBtn").addEventListener("click", () => {
-    if (state.results) {
-      downloadFile(
-        "rehearsal-scenario.json",
-        JSON.stringify(packet(), null, 2),
-        "application/json"
-      );
-    }
+    if (state.dirty || !state.results) return;
+    downloadFile(
+      "rehearsal-scenario.json",
+      JSON.stringify(packet(), null, 2),
+      "application/json"
+    );
   });
 
   $("exportBtn").addEventListener("click", () => {
-    if (!state.results) return;
+    if (state.dirty || !state.results) return;
     downloadFile(
       "rehearsal-crew-plan.txt",
       buildCrewPlanText(),
@@ -1480,6 +1486,7 @@ function initStudio(): void {
   });
 
   $("previewPlanBtn").addEventListener("click", () => {
+    if (state.dirty || !state.results) return;
     state.showPlanPreview = !state.showPlanPreview;
     $("planPreviewBox").classList.toggle("hidden", !state.showPlanPreview);
     if (state.showPlanPreview) {
@@ -1704,9 +1711,14 @@ function initStudio(): void {
   renderScenarioDeck();
   applyCategoryAndDesignToScene();
 
+  let resizeFrame = 0;
   new ResizeObserver(() => {
-    drawAll();
-    if (state.drawerOpen) drawBlueprintCanvas();
+    if (resizeFrame) return;
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = 0;
+      drawAll();
+      if (state.drawerOpen) drawBlueprintCanvas();
+    });
   }).observe(document.querySelector(".hc-stage")!);
 
   recompute();
