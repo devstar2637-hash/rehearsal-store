@@ -9,10 +9,11 @@ import {
 } from "./engine/rehearsalCore.ts";
 import {
   drawWorldCanvas,
-  generateSampleBlueprintCanvas,
+  pickObject,
   unproject,
-  type IsoView,
-} from "./engine/canvasRenderer.ts";
+  type ThreeView as IsoView,
+} from "./engine/threeRenderer.ts";
+import { generateSampleBlueprintCanvas } from "./engine/canvasRenderer.ts";
 import { mountAsciiBackground } from "./ui/asciiBackground.ts";
 
 declare global {
@@ -313,7 +314,7 @@ function mountShell(): void {
       <!-- TOP COMPACT HOUSE-CONTROL COMMAND BAR -->
       <header class="hc-topbar">
         <div class="hc-brand-group">
-          <a href="#top" class="wordmark" aria-label="Rehearsal 공간 운영 스튜디오"><svg class="brand-symbol" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5v5"/></svg>Rehearsal<span>.</span><small>SPATIAL STUDIO</small></a>
+          <a href="#top" class="wordmark" aria-label="Rehearsal 공간 운영 스튜디오"><svg class="brand-symbol" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10M7.5 4.5l9 5v5"/></svg>Rehearsal<span>.</span><small>3D WORKSPACE</small></a>
           <div class="hc-addr-pill">
             <svg class="ui-icon hc-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
             <input
@@ -330,19 +331,7 @@ function mountShell(): void {
             </div>
           </div>
 
-          <div class="hc-budget-pill">
-            <span class="hc-label">자본금</span>
-            <strong class="tabular" id="budgetDisplayLabel">1.2억</strong>
-            <input
-              id="budgetSlider"
-              type="range"
-              min="5000"
-              max="25000"
-              step="500"
-              value="12000"
-              aria-label="내 창업 자본금"
-            />
-          </div>
+
         </div>
 
         <!-- RIGHT ACTIONS & SCENARIO SURVIVAL COUNTER -->
@@ -354,38 +343,33 @@ function mountShell(): void {
             <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 15v6h16v-6"/></svg>계획서 저장
           </button>
         </div>
-        <div class="hc-cat-tabs" id="categoryGrid" role="group" aria-label="추천 창업 카테고리"></div>
-        <div class="hc-survival-badge tabular" id="heroScenarioTotal">고정 예시 · 미검증 842/1,000</div>
       </header>
-
-      <!-- SUB-TOOLBAR: DESIGN THEME + HOUSE-CONTROL ENV TOGGLES + SCENARIO DECK -->
-      <div class="hc-subbar">
-        <div class="hc-sub-left">
-          <div class="hc-design-tabs" id="designTabs" role="group" aria-label="디자인 선택"></div>
-          <div class="hc-divider"></div>
-          <div class="hc-device-toggles" role="group" aria-label="공간 조명 및 공조 제어">
-            <button type="button" class="hc-toggle active" id="toggleLightsBtn">
-              💡 조명 ON
-            </button>
-            <button type="button" class="hc-toggle active" id="toggleAcBtn">
-              ❄️ 에어컨 기류 ON
-            </button>
-          </div>
-        </div>
-
-        <div class="hc-scenario-caption">운영 프리셋 <span>표시된 개수는 고정 예시 · 미검증</span></div>
-        <div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="고정 예시 · 미검증 시나리오 프리셋"></div>
-      </div>
 
       <!-- MAIN SPATIAL 3D FLOORPLAN STAGE -->
       <main class="hc-stage" id="studio-workspace">
         <div class="compare">
+          <aside class="scene-sidebar" aria-label="공간 프로젝트 및 기준 비교">
+            <div class="scene-project-heading"><span class="scene-kicker">WORKSPACE / 01</span><h1>가게의 다음 하루를<br>먼저 살아보세요.</h1><p>공간을 바꾸고, 같은 하루를 비교하세요.</p></div>
+            <div class="sidebar-section"><div class="sidebar-section-label">매장 콘셉트</div><div class="hc-cat-tabs" id="categoryGrid" role="group" aria-label="추천 창업 카테고리"></div><div class="hc-budget-pill">
+            <span class="hc-label">자본금</span>
+            <strong class="tabular" id="budgetDisplayLabel">1.2억</strong>
+            <input
+              id="budgetSlider"
+              type="range"
+              min="5000"
+              max="25000"
+              step="500"
+              value="12000"
+              aria-label="내 창업 자본금"
+            />
+          </div></div>
+            <div class="sidebar-section-label">기준 공간 <span>같은 유입 · 같은 Seed</span></div>
           <!-- BASELINE WORLD -->
-          <section class="world">
+          <section class="world baseline">
             <div class="world-hud-top">
               <div class="world-title-pill">
                 <span class="dot-muted"></span>
-                <h2>기본 도면 (개선 전)</h2>
+                <h2>기준 공간</h2>
                 <span class="route-status" id="baseRoute">동선 연결됨</span>
               </div>
               <div class="world-kpi-strip">
@@ -420,6 +404,9 @@ function mountShell(): void {
             </div>
           </section>
 
+
+            <div class="sidebar-section scenario-section"><div class="sidebar-section-label">운영 시나리오</div><div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="고정 예시 · 미검증 시나리오 프리셋"></div><p class="scenario-footnote">프리셋 표시 개수는 고정 예시 · 미검증입니다.</p><div class="hc-survival-badge tabular" id="heroScenarioTotal">고정 예시 · 미검증 842/1,000</div></div>
+          </aside>
           <!-- PROPOSED INTERACTIVE 3D WORLD -->
           <section class="world proposed">
             <div class="world-hud-top">
@@ -448,6 +435,19 @@ function mountShell(): void {
             </div>
 
             <div class="canvasbox">
+              <div class="scene-navigation"><div class="hc-sub-left">
+          <div class="hc-design-tabs" id="designTabs" role="group" aria-label="디자인 선택"></div>
+          <div class="hc-divider"></div>
+          <div class="hc-device-toggles" role="group" aria-label="공간 조명 및 공조 제어">
+            <button type="button" class="hc-toggle active" id="toggleLightsBtn">
+              💡 조명 ON
+            </button>
+            <button type="button" class="hc-toggle active" id="toggleAcBtn">
+              ❄️ 에어컨 기류 ON
+            </button>
+          </div>
+        </div></div>
+              <div class="scene-camera-hint"><span class="camera-orbit-mark">↗</span> 우클릭 회전 <span>·</span> 휠 확대</div>
               <canvas
                 id="planCanvas"
                 role="img"
@@ -759,7 +759,7 @@ function initStudio(): void {
   let last = 0;
   let frameCounter = 0;
   let debounce = 0;
-  let drag: { id: string; dx: number; dy: number } | null = null;
+  let drag: { id: string; dx: number; dy: number; height: number } | null = null;
   let imageDrag: Point2D | null = null;
   let blueprintSource: HTMLImageElement | HTMLCanvasElement | null = null;
 
@@ -1295,22 +1295,14 @@ function initStudio(): void {
   });
 
   canvases[1].addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || !e.isPrimary) return; // Reserve right drag/pinch for the 3D camera.
     if (!views[1]) return;
     const b = canvases[1].getBoundingClientRect();
-    const pt = unproject(views[1], e.clientX - b.left, e.clientY - b.top);
-    const hit = [...state.plan.objects]
-      .reverse()
-      .find(
-        (a) =>
-          a.movable &&
-          pt.x >= a.x - 0.3 &&
-          pt.x <= a.x + a.w + 0.3 &&
-          pt.y >= a.y - 0.3 &&
-          pt.y <= a.y + a.h + 0.3
-      );
-    if (hit) {
+    const picked = pickObject(views[1], e.clientX - b.left, e.clientY - b.top);
+    const hit = picked && state.plan.objects.find((o) => o.id === picked.id && o.movable);
+    if (hit && picked) {
       state.selected = hit.id;
-      drag = { id: hit.id, dx: pt.x - hit.x, dy: pt.y - hit.y };
+      drag = { id: hit.id, dx: picked.point.x - hit.x, dy: picked.point.y - hit.y, height: picked.height };
       canvases[1].setPointerCapture(e.pointerId);
       canvases[1].style.cursor = "grabbing";
       syncControls();
@@ -1319,23 +1311,15 @@ function initStudio(): void {
   });
 
   canvases[1].addEventListener("pointermove", (e) => {
-    if (!views[1]) return;
+    if (!views[1] || (e.buttons & 2)) return;
     const b = canvases[1].getBoundingClientRect();
-    const pt = unproject(views[1], e.clientX - b.left, e.clientY - b.top);
     if (drag) {
-      setPosition(pt.x - drag.dx, pt.y - drag.dy, false);
+      const pt = unproject(views[1], e.clientX - b.left, e.clientY - b.top, drag.height);
+      if (Number.isFinite(pt.x) && Number.isFinite(pt.y)) setPosition(pt.x - drag.dx, pt.y - drag.dy, false);
       return;
     }
-    const hoverHit = [...state.plan.objects]
-      .reverse()
-      .find(
-        (a) =>
-          a.movable &&
-          pt.x >= a.x - 0.25 &&
-          pt.x <= a.x + a.w + 0.25 &&
-          pt.y >= a.y - 0.25 &&
-          pt.y <= a.y + a.h + 0.25
-      );
+    const picked = pickObject(views[1], e.clientX - b.left, e.clientY - b.top);
+    const hoverHit = picked && state.plan.objects.find((o) => o.id === picked.id && o.movable);
     const nextHover = hoverHit ? hoverHit.id : null;
     if (nextHover !== state.hovered) {
       state.hovered = nextHover;
