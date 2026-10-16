@@ -15,7 +15,8 @@ Requires Node 22.18+ (verified on Node 24). Run: `npm ci`, `npm run dev`, open `
   independently of the expiring hackathon Cloud Run project. An unavailable backend
   returns an explicit error rather than simulated success.
 - Pull external GitHub changes into the AI Studio workspace using
-  Settings > GitHub. Saving code to GitHub and deploying Cloud Run are
+  Settings > GitHub, connected to `rarehotdog/rehearsal-store`. Do not keep
+  the expiring original account connected. Saving code to GitHub and deploying Cloud Run are
   separate operations.
 - The spatial wafer and swarm are illustrative; the separate 36-month engine
   status reports actual scenario outcomes and marks cached replay results.
@@ -35,6 +36,10 @@ After pulling, remove or update any old `ENGINE_BASE_URL` override in AI Studio'
 environment settings; otherwise it still takes precedence over the new default.
 Personal repositories: https://github.com/rarehotdog/rehearsal-store and
 https://github.com/rarehotdog/GDH.
+
+All original branches and commit history are retained. Original PR metadata,
+reviews and patches are preserved in [migration archive](docs/migration-archive/README.md).
+Historical source URLs there are provenance, not runtime dependencies.
 
 ## Architecture & Core Modules
 - **3D Spatial Floorplan Internals (`src/engine/threeFloorplanStage.ts`)**: Interactive Three.js WebGL rotatable store floorplan with 16-slot LED queue buffer bars, 24-cell shared walkway sensor matrix, real-time customer agents, and CAD dimension rulers.

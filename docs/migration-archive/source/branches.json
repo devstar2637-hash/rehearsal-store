@@ -1,0 +1,53 @@
+[
+  {
+    "name": "codex/rehearsal-3d-preview",
+    "commit": {
+      "sha": "cac02f760e0135815104ddce2d2bf92872571827",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/commits/cac02f760e0135815104ddce2d2bf92872571827"
+    },
+    "protected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "enforcement_level": "off",
+        "contexts": [],
+        "checks": []
+      }
+    },
+    "protection_url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/branches/codex/rehearsal-3d-preview/protection"
+  },
+  {
+    "name": "codex/rehearsal-cloud-submission",
+    "commit": {
+      "sha": "e840435af7598d0cdde8412b4acc30978497b65f",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/commits/e840435af7598d0cdde8412b4acc30978497b65f"
+    },
+    "protected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "enforcement_level": "off",
+        "contexts": [],
+        "checks": []
+      }
+    },
+    "protection_url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/branches/codex/rehearsal-cloud-submission/protection"
+  },
+  {
+    "name": "main",
+    "commit": {
+      "sha": "ff5b2f30009b384450f0351fff87719515317f04",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/commits/ff5b2f30009b384450f0351fff87719515317f04"
+    },
+    "protected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "enforcement_level": "off",
+        "contexts": [],
+        "checks": []
+      }
+    },
+    "protection_url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/branches/main/protection"
+  }
+]

@@ -1,0 +1,217 @@
+[
+  {
+    "sha": "2637d93fea7245b9a662809107ee2ad1b3e2382d",
+    "node_id": "C_kwDOVLzp9toAKDI2MzdkOTNmZWE3MjQ1YjlhNjYyODA5MTA3ZWUyYWQxYjNlMjM4MmQ",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/2637d93fea7245b9a662809107ee2ad1b3e2382d",
+    "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/2637d93fea7245b9a662809107ee2ad1b3e2382d",
+    "author": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:41:35Z"
+    },
+    "committer": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:41:35Z"
+    },
+    "tree": {
+      "sha": "a3deab49ff58896100ca59de8ec283d705373c70",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/trees/a3deab49ff58896100ca59de8ec283d705373c70"
+    },
+    "message": "feat: build interactive WebGL space preview",
+    "parents": [
+      {
+        "sha": "e840435af7598d0cdde8412b4acc30978497b65f",
+        "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/e840435af7598d0cdde8412b4acc30978497b65f",
+        "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/e840435af7598d0cdde8412b4acc30978497b65f"
+      }
+    ],
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    },
+    "event": "committed"
+  },
+  {
+    "sha": "1e4550fb195aeabd01f8114ed431aa4753a34b9d",
+    "node_id": "C_kwDOVLzp9toAKDFlNDU1MGZiMTk1YWVhYmQwMWY4MTE0ZWQ0MzFhYTQ3NTNhMzRiOWQ",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/1e4550fb195aeabd01f8114ed431aa4753a34b9d",
+    "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/1e4550fb195aeabd01f8114ed431aa4753a34b9d",
+    "author": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:45:17Z"
+    },
+    "committer": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:45:17Z"
+    },
+    "tree": {
+      "sha": "5804afd6b7ae4f77ddd53006c2232523120bcf2d",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/trees/5804afd6b7ae4f77ddd53006c2232523120bcf2d"
+    },
+    "message": "docs: record verified 3D preview and review scope",
+    "parents": [
+      {
+        "sha": "2637d93fea7245b9a662809107ee2ad1b3e2382d",
+        "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/2637d93fea7245b9a662809107ee2ad1b3e2382d",
+        "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/2637d93fea7245b9a662809107ee2ad1b3e2382d"
+      }
+    ],
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    },
+    "event": "committed"
+  },
+  {
+    "sha": "27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe",
+    "node_id": "C_kwDOVLzp9toAKDI3ZmVjMGVmYjFhYWMyZjVlYjdhOWUyZjFkM2ZlMTA2MzBkNjIyZmU",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe",
+    "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe",
+    "author": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:46:42Z"
+    },
+    "committer": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:46:42Z"
+    },
+    "tree": {
+      "sha": "97ea25e906e6c8d4d11a20a5d311a6a5beec92e7",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/trees/97ea25e906e6c8d4d11a20a5d311a6a5beec92e7"
+    },
+    "message": "docs: preserve concurrent Antigravity statistics work",
+    "parents": [
+      {
+        "sha": "1e4550fb195aeabd01f8114ed431aa4753a34b9d",
+        "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/1e4550fb195aeabd01f8114ed431aa4753a34b9d",
+        "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/1e4550fb195aeabd01f8114ed431aa4753a34b9d"
+      }
+    ],
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    },
+    "event": "committed"
+  },
+  {
+    "sha": "9930ea224245e307d60c5e09496c50ee6837447d",
+    "node_id": "C_kwDOVLzp9toAKDk5MzBlYTIyNDI0NWUzMDdkNjBjNWUwOTQ5NmM1MGVlNjgzNzQ0N2Q",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/9930ea224245e307d60c5e09496c50ee6837447d",
+    "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/9930ea224245e307d60c5e09496c50ee6837447d",
+    "author": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:53:33Z"
+    },
+    "committer": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T05:53:33Z"
+    },
+    "tree": {
+      "sha": "2cd024449c65ba9903754a2aa91c67076fb90140",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/trees/2cd024449c65ba9903754a2aa91c67076fb90140"
+    },
+    "message": "feat: distinguish store interiors and explore 10000 scenarios",
+    "parents": [
+      {
+        "sha": "27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe",
+        "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe",
+        "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/27fec0efb1aac2f5eb7a9e2f1d3fe10630d622fe"
+      }
+    ],
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    },
+    "event": "committed"
+  },
+  {
+    "id": 33416512581,
+    "node_id": "RTE_lADOVLzp9s8AAAABXmrYUc8AAAAHx8eERQ",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/issues/events/33416512581",
+    "actor": {
+      "login": "devstar2637-hash",
+      "id": 343296879,
+      "node_id": "U_kgDOFHZLbw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/343296879?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/devstar2637-hash",
+      "html_url": "https://github.com/devstar2637-hash",
+      "followers_url": "https://api.github.com/users/devstar2637-hash/followers",
+      "following_url": "https://api.github.com/users/devstar2637-hash/following{/other_user}",
+      "gists_url": "https://api.github.com/users/devstar2637-hash/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/devstar2637-hash/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/devstar2637-hash/subscriptions",
+      "organizations_url": "https://api.github.com/users/devstar2637-hash/orgs",
+      "repos_url": "https://api.github.com/users/devstar2637-hash/repos",
+      "events_url": "https://api.github.com/users/devstar2637-hash/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/devstar2637-hash/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "event": "renamed",
+    "commit_id": null,
+    "commit_url": null,
+    "created_at": "2026-10-16T05:59:54Z",
+    "rename": {
+      "from": "Preview a real interactive 3D store workspace",
+      "to": "Explore 10000 operating conditions in four 3D store concepts"
+    },
+    "performed_via_github_app": null
+  },
+  {
+    "sha": "cac02f760e0135815104ddce2d2bf92872571827",
+    "node_id": "C_kwDOVLzp9toAKGNhYzAyZjc2MGUwMTM1ODE1MTA0ZGRjZTJkMmJmOTI4NzI1NzE4Mjc",
+    "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/cac02f760e0135815104ddce2d2bf92872571827",
+    "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/cac02f760e0135815104ddce2d2bf92872571827",
+    "author": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T06:00:42Z"
+    },
+    "committer": {
+      "name": "tyler.th",
+      "email": "tyler.th@tyler-th-nt-2024-08.local",
+      "date": "2026-10-16T06:00:42Z"
+    },
+    "tree": {
+      "sha": "7bebd6067e94aff3369e7c3979154ef2ddb48ec9",
+      "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/trees/7bebd6067e94aff3369e7c3979154ef2ddb48ec9"
+    },
+    "message": "docs: hand off verified four-concept 10000-scenario release",
+    "parents": [
+      {
+        "sha": "9930ea224245e307d60c5e09496c50ee6837447d",
+        "url": "https://api.github.com/repos/devstar2637-hash/rehearsal-store/git/commits/9930ea224245e307d60c5e09496c50ee6837447d",
+        "html_url": "https://github.com/devstar2637-hash/rehearsal-store/commit/9930ea224245e307d60c5e09496c50ee6837447d"
+      }
+    ],
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    },
+    "event": "committed"
+  }
+]
