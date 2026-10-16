@@ -852,6 +852,9 @@ function initStudio(): void {
   function syncControls(): void {
     const cat = getActiveCategory();
     const des = getActiveDesign();
+    for (const id of ["jsonBtn", "exportBtn", "previewPlanBtn"]) {
+      $<HTMLButtonElement>(id).disabled = state.dirty || !state.results;
+    }
     $("budgetDisplayLabel").textContent = formatShortWon(state.budgetManWon);
     $("heroScenarioTotal").textContent = `고정 예시 · 미검증 ${cat.survivedCount}/1,000`;
 
@@ -952,6 +955,7 @@ function initStudio(): void {
   function recompute(): void {
     window.clearTimeout(debounce);
     state.dirty = true;
+    syncControls();
     state.rev++;
     state.players = [
       { ...state.base.entrance },
@@ -1035,12 +1039,14 @@ function initStudio(): void {
       const msg = err instanceof Error ? err.message : String(err);
       window.__errors.push(msg);
       state.results = null;
+      syncControls();
       drawAll();
     }
   }
 
   function queueRecompute(): void {
     state.dirty = true;
+    syncControls();
     window.clearTimeout(debounce);
     debounce = window.setTimeout(recompute, 50);
     drawAll();
@@ -1461,17 +1467,16 @@ function initStudio(): void {
   }
 
   $("jsonBtn").addEventListener("click", () => {
-    if (state.results) {
-      downloadFile(
-        "rehearsal-scenario.json",
-        JSON.stringify(packet(), null, 2),
-        "application/json"
-      );
-    }
+    if (state.dirty || !state.results) return;
+    downloadFile(
+      "rehearsal-scenario.json",
+      JSON.stringify(packet(), null, 2),
+      "application/json"
+    );
   });
 
   $("exportBtn").addEventListener("click", () => {
-    if (!state.results) return;
+    if (state.dirty || !state.results) return;
     downloadFile(
       "rehearsal-crew-plan.txt",
       buildCrewPlanText(),
@@ -1480,6 +1485,7 @@ function initStudio(): void {
   });
 
   $("previewPlanBtn").addEventListener("click", () => {
+    if (state.dirty || !state.results) return;
     state.showPlanPreview = !state.showPlanPreview;
     $("planPreviewBox").classList.toggle("hidden", !state.showPlanPreview);
     if (state.showPlanPreview) {
