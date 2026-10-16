@@ -2,6 +2,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+import { OBJExporter } from "three/addons/exporters/OBJExporter.js";
 import {
   sample,
   type Scene,
@@ -1637,6 +1639,147 @@ export class ThreeFloorplanStage {
     this.camAnim = {
       targetPos: new THREE.Vector3(0, 18.2, 0.01),
       targetLook: new THREE.Vector3(0, 0, 0),
+    };
+  }
+
+  public exportHighResSnapshot(meta: {
+    title: string;
+    subtitle: string;
+    metrics: string;
+  }): { dataUrl: string; width: number; height: number } {
+    const prevSize = new THREE.Vector2();
+    this.renderer.getSize(prevSize);
+    const prevPr = this.renderer.getPixelRatio();
+
+    const snapW = 1920;
+    const snapH = 1080;
+    const sheetH = 1200; // +120px architectural documentation title block
+    const snapAspect = snapW / snapH;
+
+    this.perspCam.aspect = snapAspect;
+    this.perspCam.updateProjectionMatrix();
+
+    const frustumH = 11.2;
+    this.orthoCam.left = (-frustumH * snapAspect) / 2;
+    this.orthoCam.right = (frustumH * snapAspect) / 2;
+    this.orthoCam.top = frustumH / 2;
+    this.orthoCam.bottom = -frustumH / 2;
+    this.orthoCam.updateProjectionMatrix();
+
+    this.renderer.setPixelRatio(1);
+    this.renderer.setSize(snapW, snapH, false);
+    this.renderer.render(this.scene3d, this.activeCam);
+
+    const outCanvas = document.createElement("canvas");
+    outCanvas.width = snapW;
+    outCanvas.height = sheetH;
+    const ctx = outCanvas.getContext("2d")!;
+
+    // Draw 3D WebGL render
+    ctx.drawImage(this.renderer.domElement, 0, 0, snapW, snapH);
+
+    // Draw architectural documentation title block at bottom (120px height)
+    ctx.fillStyle = "#121316";
+    ctx.fillRect(0, snapH, snapW, sheetH - snapH);
+
+    // Top orange accent rule on title block
+    ctx.fillStyle = "#ea580c";
+    ctx.fillRect(0, snapH, snapW, 4);
+
+    // Left brand & store title
+    ctx.fillStyle = "#fb923c";
+    ctx.font = '700 15px "JetBrains Mono", monospace';
+    ctx.fillText("REA · A THOUSAND STORES — 3D SPATIAL DESIGN & STRESS-TEST SHEET", 32, snapH + 34);
+
+    ctx.fillStyle = "#fafafa";
+    ctx.font = '800 22px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(meta.title, 32, snapH + 66);
+
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = '600 14px "JetBrains Mono", monospace';
+    ctx.fillText(meta.subtitle, 32, snapH + 94);
+
+    // Right telemetry readout block
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ea580c";
+    ctx.font = '700 15px "JetBrains Mono", monospace';
+    ctx.fillText("10,000 PARALLEL MONTE CARLO SCENARIOS VERIFIED", snapW - 32, snapH + 40);
+
+    ctx.fillStyle = "#f4f4f5";
+    ctx.font = '700 16px "JetBrains Mono", monospace';
+    ctx.fillText(meta.metrics, snapW - 32, snapH + 72);
+
+    ctx.fillStyle = "#71717a";
+    ctx.font = '500 12px "JetBrains Mono", monospace';
+    ctx.fillText(`SCALE: 12.0m × 9.0m METRIC GRID · EXPORTED ${new Date().toISOString().slice(0, 19).replace("T", " ")} UTC`, snapW - 32, snapH + 96);
+
+    const dataUrl = outCanvas.toDataURL("image/png");
+
+    // Restore original viewport size & aspect ratio seamlessly
+    this.renderer.setPixelRatio(prevPr);
+    this.resize();
+    this.renderer.render(this.scene3d, this.activeCam);
+
+    return { dataUrl, width: snapW, height: sheetH };
+  }
+
+  public async exportGLTF(binary = false): Promise<{
+    blob: Blob;
+    ext: "gltf" | "glb";
+    sizeBytes: number;
+    textPreview?: string;
+  }> {
+    const exporter = new GLTFExporter();
+    const result = await exporter.parseAsync(this.rootGroup, {
+      binary,
+      onlyVisible: true,
+    });
+    if (result instanceof ArrayBuffer) {
+      const blob = new Blob([result], { type: "model/gltf-binary" });
+      return {
+        blob,
+        ext: "glb",
+        sizeBytes: blob.size,
+        textPreview: `GLB Binary Container (glTF 2.0) · ${blob.size.toLocaleString("en-US")} bytes · Magic: 0x46546C67 ("glTF")`,
+      };
+    }
+    const jsonText = JSON.stringify(result, null, 2);
+    const blob = new Blob([jsonText], { type: "model/gltf+json;charset=utf-8" });
+    return {
+      blob,
+      ext: "gltf",
+      sizeBytes: blob.size,
+      textPreview: jsonText.slice(0, 720) + (jsonText.length > 720 ? "\n  ...\n}" : ""),
+    };
+  }
+
+  public exportOBJ(): {
+    blob: Blob;
+    ext: "obj";
+    sizeBytes: number;
+    vertexCount: number;
+    textPreview: string;
+    fullText: string;
+  } {
+    const exporter = new OBJExporter();
+    const objContent = exporter.parse(this.rootGroup);
+    const header = [
+      "# REA · A Thousand Stores — 3D Floorplan CAD Mesh (.OBJ)",
+      "# Metric Scale: 1 unit = 1.0 meter (12.0m x 9.0m store footprint)",
+      `# Exported: ${new Date().toISOString()}`,
+      "",
+    ].join("\n");
+    const fullText = header + objContent;
+    const vertexMatches = objContent.match(/^v\s+/gm);
+    const vertexCount = vertexMatches ? vertexMatches.length : 0;
+    const blob = new Blob([fullText], { type: "text/plain;charset=utf-8" });
+    return {
+      blob,
+      ext: "obj",
+      sizeBytes: blob.size,
+      vertexCount,
+      textPreview: fullText.split("\n").slice(0, 16).join("\n") + "\n...",
+      fullText,
     };
   }
 

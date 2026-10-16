@@ -20,12 +20,12 @@ import {
   type TenKClusterItem,
 } from "./engine/d3StatsCharts.ts";
 import { ThreeFloorplanStage } from "./engine/threeFloorplanStage.ts";
-import { summarizeBackendRun } from "./engine/backendSync.ts";
 import {
   createTenKMatrixEngine,
   type StoreRunCell,
   type WaferViewMode,
 } from "./engine/tenKMatrixEngine.ts";
+import { summarizeBackendRun } from "./engine/backendSync.ts";
 
 declare global {
   interface Window {
@@ -582,6 +582,7 @@ function mountShell(): void {
         </nav>
         <div class="rea-header-actions">
           <button type="button" class="rea-btn-outline" id="toggleViewModeBtn">📐 2D CAD Blueprint</button>
+          <button type="button" class="rea-btn-outline" id="headerExport3DBtn">📦 Export 3D / Snapshot</button>
           <button type="button" class="rea-btn-solid" id="exportBtn">Export Spec (.txt)</button>
         </div>
       </div>
@@ -609,13 +610,54 @@ function mountShell(): void {
               </div>
             </div>
 
-            <!-- TOP-RIGHT HUD: 10K Swarm + Revolve + Iso View + Top 2D + Theme -->
+            <!-- TOP-RIGHT HUD: 10K Swarm + Export 3D + Revolve + Iso View + Top 2D + Theme -->
             <div class="pgrun-hud-top-right">
               <button type="button" class="pgrun-pill-btn active" id="threeSwarmBtn" aria-pressed="true" title="Toggle 10,000-Scenario Parallel Trajectory Swarm">⚡ <span>10K SWARM</span></button>
+              <button type="button" class="pgrun-pill-btn" id="threeExportMenuBtn" aria-expanded="false" title="Export 3D Floorplan as Hi-Res Snapshot, glTF, GLB, or OBJ">📦 <span>EXPORT 3D</span></button>
               <button type="button" class="pgrun-pill-btn" id="threeRevolveBtn" aria-pressed="false">⟳ <span>REVOLVE</span></button>
               <button type="button" class="pgrun-pill-btn" id="threeIsoBtn" title="Reset Isometric View (I)">ISO VIEW</button>
               <button type="button" class="pgrun-pill-btn" id="threeTopBtn" title="Top-Down 2D Orthographic View">TOP 2D</button>
               <button type="button" class="pgrun-icon-btn" id="threeThemeBtn" aria-label="Toggle Light/Dark Theme" title="Toggle Light / Dark Stage Theme (T)">◐</button>
+            </div>
+
+            <!-- FLOATING 3D DESIGN DOCUMENTATION EXPORT DRAWER -->
+            <div class="pgrun-export-drawer hidden" id="threeExportDrawer" role="dialog" aria-label="Export 3D Floorplan Documentation">
+              <div class="pgrun-exp-head">
+                <strong>📦 3D Floorplan CAD &amp; Snapshot Export</strong>
+                <button type="button" class="pgrun-exp-close" id="closeExportDrawerBtn" aria-label="Close Export Drawer">✕</button>
+              </div>
+              <p class="pgrun-exp-desc">
+                Export the current 12.0m × 9.0m 3D spatial layout, fixtures, and 10,000-scenario stress-test sheet for design documentation or 3D CAD tools (Blender, Rhino, SketchUp).
+              </p>
+              <div class="pgrun-exp-grid">
+                <button type="button" class="pgrun-exp-btn primary" id="export3DSnapBtn">
+                  <strong>📸 Hi-Res Snapshot (.png)</strong>
+                  <small>1920×1200 Sheet + Telemetry</small>
+                </button>
+                <button type="button" class="pgrun-exp-btn" id="export3DGltfBtn">
+                  <strong>📦 glTF 2.0 Scene (.gltf)</strong>
+                  <small>Standard 3D JSON Hierarchy</small>
+                </button>
+                <button type="button" class="pgrun-exp-btn" id="export3DGlbBtn">
+                  <strong>🧊 Binary Model (.glb)</strong>
+                  <small>Compact Single-File 3D Asset</small>
+                </button>
+                <button type="button" class="pgrun-exp-btn" id="export3DObjBtn">
+                  <strong>📐 Wavefront Mesh (.obj)</strong>
+                  <small>Metric 1:1 CAD Geometry</small>
+                </button>
+              </div>
+              <div class="pgrun-exp-status tabular" id="export3DStatusText" role="status">
+                Ready · Scale 1.0 unit = 1.0m (12.0m × 9.0m Grid)
+              </div>
+              <div class="pgrun-exp-actions hidden" id="export3DActionRow">
+                <a class="pgrun-exp-action-btn primary" id="export3DDirectLink" href="#" download="rehearsal-floorplan.png">⬇ Save File</a>
+                <button type="button" class="pgrun-exp-action-btn" id="export3DCopyBtn">📋 Copy Data</button>
+              </div>
+              <div class="pgrun-exp-preview hidden" id="export3DPreviewBox">
+                <img id="export3DPreviewImg" alt="Exported 3D Floorplan High-Resolution Snapshot Preview" />
+              </div>
+              <pre class="pgrun-exp-code tabular hidden" id="export3DCodeSnippet"></pre>
             </div>
 
             <!-- RIGHT FLOATING SCENARIO & LAYOUT STACK (exact pgrun.dev .ctl stack) -->
@@ -2574,6 +2616,179 @@ function initStudio(): void {
     threeStage.snapToTopView();
   });
 
+  function toggleExportDrawer(forceOpen?: boolean): void {
+    const drawer = $("threeExportDrawer");
+    const btn = $("threeExportMenuBtn");
+    const isHidden = drawer.classList.contains("hidden");
+    const shouldOpen = forceOpen !== undefined ? forceOpen : isHidden;
+    drawer.classList.toggle("hidden", !shouldOpen);
+    btn.classList.toggle("active", shouldOpen);
+    btn.setAttribute("aria-expanded", String(shouldOpen));
+  }
+
+  $("threeExportMenuBtn").addEventListener("click", () => {
+    toggleExportDrawer();
+  });
+
+  $("headerExport3DBtn").addEventListener("click", () => {
+    $("sec-3d-stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    toggleExportDrawer(true);
+  });
+
+  $("closeExportDrawerBtn").addEventListener("click", () => {
+    toggleExportDrawer(false);
+  });
+
+  let currentExportUrl: string | null = null;
+  let lastExportCopyText = "";
+
+  function setDirectExportReady(opts: {
+    url: string;
+    filename: string;
+    copyText: string;
+    imagePreviewUrl?: string;
+    codeSnippet?: string;
+  }): void {
+    const directLink = $<HTMLAnchorElement>("export3DDirectLink");
+    directLink.href = opts.url;
+    directLink.download = opts.filename;
+    directLink.textContent = `⬇ Save ${opts.filename}`;
+    lastExportCopyText = opts.copyText;
+    $("export3DActionRow").classList.remove("hidden");
+
+    // Also trigger automatic browser download
+    const autoLink = document.createElement("a");
+    autoLink.href = opts.url;
+    autoLink.download = opts.filename;
+    document.body.appendChild(autoLink);
+    autoLink.click();
+    document.body.removeChild(autoLink);
+
+    if (opts.imagePreviewUrl) {
+      const previewImg = $<HTMLImageElement>("export3DPreviewImg");
+      previewImg.src = opts.imagePreviewUrl;
+      $("export3DPreviewBox").classList.remove("hidden");
+    } else {
+      $("export3DPreviewBox").classList.add("hidden");
+    }
+
+    const codeBox = $("export3DCodeSnippet");
+    if (opts.codeSnippet) {
+      codeBox.textContent = opts.codeSnippet;
+      codeBox.classList.remove("hidden");
+    } else {
+      codeBox.classList.add("hidden");
+    }
+  }
+
+  function createManagedObjectUrl(blob: Blob): string {
+    if (currentExportUrl && currentExportUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(currentExportUrl);
+    }
+    currentExportUrl = URL.createObjectURL(blob);
+    return currentExportUrl;
+  }
+
+  $("export3DCopyBtn").addEventListener("click", async () => {
+    if (!lastExportCopyText) return;
+    try {
+      await navigator.clipboard.writeText(lastExportCopyText);
+      $("export3DCopyBtn").textContent = "✓ Copied!";
+      window.setTimeout(() => {
+        $("export3DCopyBtn").textContent = "📋 Copy Data";
+      }, 1500);
+    } catch {
+      $("export3DCopyBtn").textContent = "✓ Selected";
+    }
+  });
+
+  $("export3DSnapBtn").addEventListener("click", () => {
+    const dist = getActiveDistrict();
+    const cat = getActiveCategory();
+    const des = getActiveDesign();
+    const unit = getActiveUnit();
+    const areaPy = state.customAreaPyeong ?? unit.areaPyeong;
+    const activeRes =
+      state.threeMode === "baseline"
+        ? state.results?.base
+        : state.results?.plan;
+    const waitSec = Math.round(activeRes?.meanWaitSec ?? 18);
+    const donePax = activeRes?.completed ?? 47;
+    const walkM = (activeRes?.walkDistance ?? 16.5).toFixed(1);
+
+    const snap = threeStage.exportHighResSnapshot({
+      title: `${dist.name} · ${cat.title} (${des.name})`,
+      subtitle: `Address: ${dist.fullAddress} · Footprint: ${areaPy}py (${(areaPy * 3.3).toFixed(1)}m²) · Mode: ${state.threeMode.toUpperCase()}`,
+      metrics: `Mean Wait ${waitSec}s · 10m Served ${donePax} pax · Walk ${walkM}m · Survived ${cat.survivedCount.toLocaleString("en-US")}/10,000`,
+    });
+
+    const filename = `rehearsal-3d-${state.districtId}-${state.categoryId}-${state.designId}.png`;
+    setDirectExportReady({
+      url: snap.dataUrl,
+      filename,
+      copyText: snap.dataUrl,
+      imagePreviewUrl: snap.dataUrl,
+    });
+    $("export3DStatusText").textContent = `✅ Exported Hi-Res Snapshot (${snap.width}×${snap.height}px PNG with Telemetry Title Block)`;
+  });
+
+  $("export3DGltfBtn").addEventListener("click", async () => {
+    try {
+      $("export3DStatusText").textContent = "⏳ Building glTF 2.0 scene hierarchy...";
+      const res = await threeStage.exportGLTF(false);
+      const filename = `rehearsal-floorplan-${state.categoryId}-${state.designId}.gltf`;
+      const url = createManagedObjectUrl(res.blob);
+      const fullJson = await res.blob.text();
+      setDirectExportReady({
+        url,
+        filename,
+        copyText: fullJson,
+        codeSnippet: res.textPreview,
+      });
+      const kb = (res.sizeBytes / 1024).toFixed(1);
+      $("export3DStatusText").textContent = `✅ Exported ${filename} (${kb} KB · glTF 2.0 Scene)`;
+    } catch (err) {
+      $("export3DStatusText").textContent = `⚠️ glTF export failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  });
+
+  $("export3DGlbBtn").addEventListener("click", async () => {
+    try {
+      $("export3DStatusText").textContent = "⏳ Packing binary GLB 3D asset...";
+      const res = await threeStage.exportGLTF(true);
+      const filename = `rehearsal-floorplan-${state.categoryId}-${state.designId}.glb`;
+      const url = createManagedObjectUrl(res.blob);
+      setDirectExportReady({
+        url,
+        filename,
+        copyText: res.textPreview || filename,
+        codeSnippet: res.textPreview,
+      });
+      const kb = (res.sizeBytes / 1024).toFixed(1);
+      $("export3DStatusText").textContent = `✅ Exported ${filename} (${kb} KB · Binary GLB)`;
+    } catch (err) {
+      $("export3DStatusText").textContent = `⚠️ GLB export failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  });
+
+  $("export3DObjBtn").addEventListener("click", () => {
+    try {
+      const res = threeStage.exportOBJ();
+      const filename = `rehearsal-floorplan-${state.categoryId}-${state.designId}.obj`;
+      const url = createManagedObjectUrl(res.blob);
+      setDirectExportReady({
+        url,
+        filename,
+        copyText: res.fullText,
+        codeSnippet: res.textPreview,
+      });
+      const kb = (res.sizeBytes / 1024).toFixed(1);
+      $("export3DStatusText").textContent = `✅ Exported ${filename} (${kb} KB · ${res.vertexCount.toLocaleString("en-US")} vertices)`;
+    } catch (err) {
+      $("export3DStatusText").textContent = `⚠️ OBJ export failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  });
+
   $("threeThemeBtn").addEventListener("click", () => {
     const nextTheme = threeStage.toggleTheme();
     $("pgrunStageShell").setAttribute("data-stage-theme", nextTheme);
@@ -3137,9 +3352,15 @@ initStudio();
 
 async function syncWithBackendEngine(rerun = false): Promise<void> {
   const status = document.getElementById("backendEngineStatus");
-  const button = document.getElementById("refreshBackendEngineBtn") as HTMLButtonElement | null;
+  const button = document.getElementById(
+    "refreshBackendEngineBtn"
+  ) as HTMLButtonElement | null;
   if (button) button.disabled = true;
-  if (status) status.textContent = rerun ? "Running the 36-month engine…" : "Loading engine results…";
+  if (status) {
+    status.textContent = rerun
+      ? "Running the 36-month engine…"
+      : "Loading engine results…";
+  }
   try {
     const res = await fetch(rerun ? "/api/rehearse" : "/api/summary", {
       method: rerun ? "POST" : "GET",
@@ -3150,16 +3371,30 @@ async function syncWithBackendEngine(rerun = false): Promise<void> {
     });
     if (!res.ok) throw new Error("Engine returned HTTP " + res.status);
     const summary = summarizeBackendRun(await res.json());
-    if (status) status.textContent =
-      `36-month engine [computed · ${summary.replay ? "cached replay" : "fresh run"}]: ${summary.survived.toLocaleString("en-US")} / ${summary.total.toLocaleString("en-US")} completed scenarios · ${summary.runId}`;
+    if (status) {
+      status.textContent = `36-month engine [computed · ${
+        summary.replay ? "cached replay" : "fresh run"
+      }]: ${summary.survived.toLocaleString(
+        "en-US"
+      )} / ${summary.total.toLocaleString("en-US")} completed scenarios · ${
+        summary.runId
+      }`;
+    }
   } catch {
-    if (status) status.textContent = "36-month backend unavailable. Spatial preview remains illustrative; no live engine result is claimed.";
+    if (status) {
+      status.textContent =
+        "36-month backend unavailable. Spatial preview remains illustrative; no live engine result is claimed.";
+    }
   } finally {
     if (button) button.disabled = false;
   }
 }
-document.getElementById("refreshBackendEngineBtn")?.addEventListener("click", () => {
-  void syncWithBackendEngine(true);
-});
+
+document
+  .getElementById("refreshBackendEngineBtn")
+  ?.addEventListener("click", () => {
+    void syncWithBackendEngine(true);
+  });
+
 void syncWithBackendEngine();
 
