@@ -1,0 +1,115 @@
+{
+ "constraints": {
+  "budgetKrw": 120000000,
+  "reserveRatioMin": 0.1,
+  "horizonMonths": 36,
+  "district": "성수동",
+  "trade": "cafe",
+  "seed": 20261016
+ },
+ "baseDesign": {
+  "id": "base-seongsu-cafe",
+  "seats": 22,
+  "floorAreaM2": 49.5,
+  "deposit": {
+   "value": 35000000,
+   "source": {
+    "kind": "onsite",
+    "field": "deposit",
+    "note": "성수동 1층 15평형 보증금 현장 호가(데모 고정값)"
+   }
+  },
+  "monthlyRent": {
+   "value": 3200000,
+   "source": {
+    "kind": "onsite",
+    "field": "monthlyRent",
+    "note": "성수동 1층 15평형 월세 현장 호가(데모 고정값)"
+   }
+  },
+  "fitoutCost": {
+   "value": 62000000,
+   "source": {
+    "kind": "onsite",
+    "field": "fitoutCost",
+    "note": "인테리어 4,200만 + 장비 2,000만 현장 견적. fitoutCost = construction + equipment (shared/types.ts); equipmentKrw below is informational and is NOT added again"
+   }
+  },
+  "staffFte": 1.5,
+  "ownerHoursPerWeek": 54,
+  "menuTier": 2,
+  "avgTicketKrw": 4800,
+  "makeTimeSec": 95,
+  "openDaysPerWeek": 6,
+  "equipmentKrw": 20000000,
+  "cupsPerDayBase": 63.1,
+  "cogsRatio": 0.32,
+  "openingMonth": 3,
+  "wagePerStaffKrw": 2400000,
+  "otherExpenseRatio": 0.06
+ },
+ "sourceTags": {
+  "seats": {
+   "kind": "onsite",
+   "field": "seats"
+  },
+  "floorAreaM2": {
+   "kind": "onsite",
+   "field": "floorAreaM2",
+   "note": "건축물대장 미조회, 현장 입력(데모 고정값)"
+  },
+  "staffFte": {
+   "kind": "assumed",
+   "note": "1.5 FTE"
+  },
+  "avgTicketKrw": {
+   "kind": "assumed",
+   "note": "객단가 4,800원"
+  },
+  "cupsPerDayBase": {
+   "kind": "computed",
+   "by": "oracle",
+   "field": "cupsPerDayBase",
+   "note": "(estSalesKrw(2024Q4)/3)/avgTicketKrw/30/totalStores(2024Q4) = 63.1"
+  },
+  "cogsRatio": {
+   "kind": "assumed",
+   "note": "원가율 32%"
+  },
+  "openingMonth": {
+   "kind": "assumed",
+   "note": "3월 개업"
+  },
+  "wagePerStaffKrw": {
+   "kind": "assumed",
+   "note": "월 240만원/FTE (SPEC §5)"
+  },
+  "otherExpenseRatio": {
+   "kind": "assumed",
+   "note": "매출의 6% (SPEC §5)"
+  },
+  "seasonality": {
+   "kind": "assumed",
+   "note": "shared/constants.ts DEFAULT_SEASONALITY"
+  },
+  "market": {
+   "kind": "public",
+   "dataset": "서울시 상권분석서비스 OA-15577/OA-15572 (data/seoul manifest v1)",
+   "asOf": "2021Q1-2024Q4",
+   "field": "market",
+   "url": "https://data.seoul.go.kr/dataList/OA-15577/S/1/datasetView.do"
+  },
+  "equipmentKrw": {
+   "kind": "onsite",
+   "field": "equipmentKrw",
+   "note": "informational; included in fitoutCost"
+  }
+ },
+ "inputFiles": [
+  "data/seoul/raw/서울시_상권분석서비스(점포-상권)_2021년.zip",
+  "data/seoul/raw/서울시_상권분석서비스(점포-상권)_2022년.zip",
+  "data/seoul/raw/서울시_상권분석서비스(점포-상권)_2023년.zip",
+  "data/seoul/raw/서울시 상권분석서비스(점포-상권)_2024년.zip",
+  "tests/fixtures/input.seongsu.json"
+ ]
+}
