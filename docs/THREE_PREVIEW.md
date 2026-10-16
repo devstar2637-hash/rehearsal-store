@@ -1,47 +1,35 @@
-# Rehearsal V2 — Three.js preview scope
+# Rehearsal V2 — released 3D and exploration scope
 
-Branch: `codex/rehearsal-3d-preview`.
+Runtime source: `9930ea224245e307d60c5e09496c50ee6837447d`.
 
-Runtime source: `2637d93fea7245b9a662809107ee2ad1b3e2382d`. Build, type checks and the selected 13 tests passed for this runtime source. Preview: https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app . Cloud Run revision: `rehearsal-3d-preview-00001-dmq` in `h2gdm-hack26icn-2637` / `asia-northeast3`. Public health matches that source and the deployed JavaScript bytes match the local checked build. V1 remains the prior 2.5D submission product; its documents and 113.457-second recording have not become V2 evidence.
+Source branch: https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-3d-preview · Draft PR: https://github.com/devstar2637-hash/rehearsal-store/pull/2. Main remains unmerged.
 
-## New presentation and interaction
+Preview: https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app · service/revision `rehearsal-3d-preview` / `rehearsal-3d-preview-00002-sjr`, project `h2gdm-hack26icn-2637`, region `asia-northeast3`. Health/main JavaScript/worker correspondence and public interaction smoke 9/9 are confirmed.
 
-The active world renderer is `src/engine/threeRenderer.ts`, imported by `src/main.ts`. It creates a Three.js WebGLRenderer, perspective camera, OrbitControls, lit procedural room/furniture meshes and raycast picking. A larger main room studio and compact comparison view replace the earlier paired 2D world presentation.
+## Implemented scope
 
-- Right-drag orbits the camera; wheel/middle-drag zooms within limits.
-- Left-click selects a movable mesh; left-drag maps pointer position through the perspective camera onto an elevation-aware plane for the existing placement flow.
-- Procedural furniture and customer representations visualize the existing scenario state.
-- Manual image-region marking and exports remain available through the existing studio controls.
+The world uses Three.js WebGLRenderer, a perspective camera, OrbitControls, procedural room/furniture and raycast picking. Right-drag orbits; wheel/middle drag zooms; left-drag maps a picked movable mesh through an elevation-aware drag plane. Category selection changes actual coffee, bakery, matcha and wine equipment/material geometry, not labels alone.
 
-These are rendering and interaction changes. Physical realism, model accuracy, throughput and commercial survival performance have not been newly validated.
+The explorer generates 10,000 unique condition tuples per category and displays them on a 100 × 100 map. Its default capacity screen is analytic; selecting a row applies the actual settings to two detailed comparison runs. The optional bounded worker runs 10,000 conditions on one proposed-scene snapshot, with progress/cancel and complete current-receipt export. Scene/category changes invalidate worker results.
 
-## Calculation authority and unchanged boundaries
+## Actual verification
 
-`src/engine/rehearsalCore.ts` remains the deterministic spatial/queue core: A* paths, footprint constraints, seeded arrivals/service requirements, FIFO station queues and a short operating window. The renderer reads its scenes/results; changing camera angle or materials must not change those calculations.
+- Build/type check and 16 selected tests passed; protected spatial core/shared contracts are unchanged.
+- Local UI: 15/15 checks and a separate 2/2 final mesh recheck passed, including four distinct geometry/material signatures/captures, candidate application, cancellation/stale guards, 1440/390 px fit and observed errors.
+- One actual local coffee batch completed 10,000 unique cases in 11,849.5 ms, with 2,500 blocked, 7,500 open and zero conservation failures.
+- Five main-thread recomputations using the same core agreed with checked compact worker fields; actual downloaded JSON matched. This is shared-core correspondence, not a separate real-world oracle.
+- Public release source/main/worker identity and public interaction smoke 9/9 passed. One actual public-page coffee client-worker batch completed 10,000 unique rows in 74,711.6 ms; all compact rows matched the verified local population and its 2,928,628-byte JSON matched the receipt. This is client-side execution, not Cloud server or inference timing.
 
-Fixed category survival counts and preset labels remain illustrative. Address input remains a label, image obstacles are manually mapped, and lighting/AC presentation is visual. There is no new AI inference, photo understanding, live market feed, financial calibration or safety certification in this preview.
+Shared-workspace receipts include `deliverables/rehearsal-3d-industry-verification/actual-10000-receipt.json` and `deliverables/rehearsal-3d-industry-cloud-verification/assets.json`. Timings are observed local conditions, not universal performance guarantees; the run does not establish full execution for all four categories or 20,000 paired cases.
 
-## REA reference evidence
+## Boundaries and reference evidence
 
-The reference analysis completed successfully with REA **6.5.0**, covering **26 relevant files** and producing **184 graph nodes / 434 edges** for House Control's static JavaScript. The shared-workspace receipt is `.tools/rea-reference/evidence/rea-reference-receipt.json` (outside the application runtime).
+The deterministic core retains synthetic arrivals/service requirements, A* footprint checks and FIFO stations. No new AI inference, image understanding, live market feed, profit/survival model, financial calibration or safety certification is added. Room materials, lighting/AC and ASCII remain presentation.
 
-The analysis parsed inert text; it did not execute the reference application. Incomplete/static graph coverage does not establish runtime behavior or equivalence. REA has not been added as an application dependency, runtime service or required user configuration. House Control is an architecture reference; the preview uses newly written procedural room/furniture models without copied reference source or assets.
+REA 6.5.0 analyzed House Control's inert JavaScript across 26 relevant files, yielding 184 graph nodes and 434 edges. It did not execute that app, prove equivalence or become a runtime dependency. Category furniture/room models are newly written procedural geometry without copied reference source/assets.
 
-## Verification and review
+## Release and integration
 
-- Runtime source frozen as above. The original core, shared contracts and core reference tests have an empty diff from the user's uploaded main.
-- Build, type check and the selected 13 tests passed for this preview.
-- Two actual WebGL2 contexts rendered the rooms. Native right-drag and wheel changed screenshots while the complete simulation packet/revision stayed unchanged.
-- Native left-drag moved the display from `(7.6,7.6)` to `(6.7,7.6)` and revision 1 to 2, with complete recalculation.
-- Seed-42 baseline/proposal completions were 27/47. Pending exports were blocked and completed JSON matched the current scenario.
-- Desktop 1440 px and mobile 390 px had no horizontal overflow or observed app/JavaScript errors.
-- Public health, exact runtime source and JavaScript byte identity are confirmed. Separate public-browser smoke passed 8/8: source, WebGL rendering, reference outputs, orbit, wheel, mobile layout, observed errors and request scope.
-- User visual review is still pending. Review V2 before revising the V1 submission packet or replacing its recording.
+The current V2 English packet and `rehearsal-v2-3d-four-concepts-walkthrough-en.mp4` replace the prior 2.5D materials for this branch. The actual recording is 114.069987 seconds, English narrated/captioned and composed from seven local screen captures; public video hosting and actual submission remain incomplete.
 
-Shared-workspace evidence: `deliverables/rehearsal-3d-verification/` and `deliverables/rehearsal-3d-cloud-verification/` (outside this repository). The initial local harness used a 756 px viewport with 1440 px gesture coordinates; retain those failed checks alongside the corrected 1440 px mesh recheck rather than treating them as application defects. Test results are observed implementation checks, not real-world operating performance.
-
-## Separate-service plan
-
-The deployed preview uses the explicit separate service `rehearsal-3d-preview`; the prior service and packet were not replaced. Keep selecting the approved project and this service using `GCP_SERVICE` for future preview deployments. Draft PR #2 targets the prior submission branch for focused review; main remains unmerged.
-
-During final read-only reconciliation, Antigravity's main advanced to `46679971857e5e8df11c85e7ebccf709a3f7a5ca` with D3 statistical charts and changes to `main.ts`, Canvas rendering, styles and package metadata. This 3D preview does not incorporate that new commit. Review the 3D direction first; integrate the current statistics work separately rather than replacing it with this preview branch.
+Concurrent `origin/main` commit `46679971857e5e8df11c85e7ebccf709a3f7a5ca` contains separate D3/statistics work not incorporated here. Preserve Antigravity's uncommitted changes and selectively reconcile overlaps; do not hard-reset that work. Review PR #2 and retain the separate preview service. Exact contracts and Korean handoff prompt are in [AGENT_HANDOFF_3D.md](AGENT_HANDOFF_3D.md).

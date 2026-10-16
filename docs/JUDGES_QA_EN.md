@@ -1,55 +1,45 @@
-# Rehearsal — judges' questions
+# Rehearsal V2 — judges' questions
 
-Answers describe the inspected spatial entry point. Update execution/deployment status only from actual receipts.
+## What is implemented?
 
-## What problem does it solve?
+A Three.js WebGL studio with four distinct procedural store interiors, editable furniture, deterministic queue/path calculations, a 10,000-condition explorer and an optional detailed Web Worker batch. It is deployed on Cloud Run at https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app from runtime `9930ea224245e307d60c5e09496c50ee6837447d`, revision `rehearsal-3d-preview-00002-sjr`.
 
-It gives a store team an inspectable way to discuss layout and staffing before physically changing the space. The output is a scenario to examine and measure, rather than a confident business recommendation.
+## Is the 3D real?
 
-## What actually runs?
+The rooms use WebGLRenderer, PerspectiveCamera, mesh geometry, lighting, OrbitControls and raycast picking. Right-drag orbits, wheel zooms and left-drag moves a selected furniture mesh. Physical realism and real-store reconstruction are not established by rendering.
 
-The browser runs A* routes around static furniture, seeded synthetic arrivals and service requirements, and FIFO order/pickup queues. Canvas renders the paired spaces and calculated results over 600 seconds.
+## Do the four categories differ beyond their labels?
 
-## What makes the comparison meaningful?
+Yes: the implemented and locally checked concepts include coffee equipment, a bakery oven and bread rack, matcha tea equipment/noren panels, and a wine bottle library/bar setting. Geometry/material signatures and captured category views were distinct. Their operating assumptions remain synthetic.
 
-Both layouts share the same seed and per-customer requirements. A causal explanation still requires holding unrelated inputs fixed: the default proposal can differ in both layout and pickup staffing, so its entire difference cannot be attributed to furniture placement.
+## What exactly are the 10,000 cases?
 
-## Are these real waiting times?
+Per selected category, they are unique tuples of arrival rate, service time, order staffing, pickup staffing and body width. The default fast screen is analytic capacity classification. A selected row triggers two detailed comparison runs; the optional full worker executes 10,000 conditions on one proposed-scene snapshot. It is not 20,000 paired runs or proof of every category's full execution.
 
-They are calculations under synthetic assumptions. The model accounts for customers still present at the end of the window and exposes conservation and route checks. This does not establish field accuracy.
+## Did the complete batch actually run?
 
-## What does “1,000 scenarios / survived” mean?
+One local coffee/proposed-scene batch completed 10,000 unique cases in 11,849.5 ms: 2,500 blocked routes, 7,500 open routes and zero conservation failures. Five sampled rows matched main-thread recomputation with the same core, and downloaded JSON matched the receipt. This is mechanism/correspondence evidence under a particular synthetic scene, not a universal benchmark or independent real-world oracle.
 
-Those badges and preset-count labels are fixed demonstration content. They are not outputs from a completed search, survival probabilities or validated financial studies. The defensible evidence is the current spatial calculation and its exported inputs/results.
+## What happens when a user changes inputs or cancels?
 
-## Does a photo become a real floorplan automatically?
+The UI invalidates the active job/receipt, uses category/revision/job-token guards and blocks stale export. Cancellation/timeout terminates the worker without a complete receipt; partial progress is not a successful full-batch result. Local cancellation and stale-result guards were included in the recorded UI checks.
 
-The user previews an image, marks and confirms a rectangle, then maps it to the assumed 12 m × 9 m scene. The active studio performs neither automatic recognition nor measured dimensional reconstruction.
+## Is there live AI or address-level market data?
 
-## Does the address retrieve market data?
+The product was developed in Antigravity; the exact development model identifier is unverified. This runtime uses deterministic code and procedural models, without a model API call or live market feed. An address labels a scenario; a photo supports manual marking rather than automatic recognition or measured dimensional reconstruction.
 
-The address is a scenario label. The active spatial entry point does not geocode it or retrieve address-specific data. The fixed category costs are not validated site quotations.
+## Are the results forecasts or safety guarantees?
 
-## Where is Google AI used?
+No. They are calculations under synthetic arrival/service, geometry and staffing assumptions. There is no profit/survival probability or physical airflow model. Body-width checks are not accessibility, building-code or safety certification. Main-thread and worker computations share the same core; agreement does not validate that core against reality.
 
-The product was developed in Antigravity. At runtime, the current studio executes deterministic code and editable templates without a model API call. If the form asks for Google AI usage, this distinction is the declaration; an installed Gemini dependency is not execution evidence. The exact development model identifier has not been verified.
+## How was it checked?
 
-## What is Google Cloud's role?
+Build/type checking and 16 tests passed; independent local UI checks passed 15/15, with a separate final mesh recheck passing 2/2 for the recorded interactions, categories, exports and responsive layouts. The deployed health identifies the source and main/worker bytes match the local build. Nine public interaction checks passed. One public-page coffee client worker completed 10,000 rows in 74,711.6 ms, all compact rows matched the local population, and its 2,928,628-byte JSON matched the receipt. That timing is browser-side, not Cloud server execution or model latency.
 
-The Vite build uses a Node.js 22 static host on Cloud Run at https://thousand-stores-299086406033.asia-northeast3.run.app. Source `4776c749a9703bd7fe07fd59a464e7a34d16b691` is deployed as revision `thousand-stores-00004-4rd`, ready with 100% traffic. Nine bounded independent public checks passed, including source/JavaScript correspondence, actual calculations, 390/1440 px layout and pending-export protection. This is workflow evidence, not a financial-validation claim.
+## Why use reference analysis?
 
-## Does the visual refresh change the model?
+REA 6.5.0 statically analyzed House Control's JavaScript structure (26 relevant files, 184 graph nodes and 434 edges). It did not execute the reference or prove behavioral equivalence, and is not a runtime dependency. The store models are newly written procedural geometry rather than copied reference assets.
 
-It changes control presentation, spacing, typography and responsive layout, with an independently authored decorative Canvas ASCII field. The background is capped at eight frames per second, pauses while hidden and remains static for reduced-motion preferences. It does not participate in simulation; the spatial core, shared contracts and reference fixtures remain unchanged from the reviewed product source.
+## What is ready for submission?
 
-## Are lighting and AC physically simulated?
-
-They are renderer controls. The prototype does not calculate physical illumination, airflow, thermal comfort or energy consumption, and it does not control equipment.
-
-## What are the main validation limits?
-
-The model uses a 0.1 m grid, a static footprint, fixed walking speed and fixed service stations. It is not safety, accessibility, building-code or financial certification. Optional observation controls adjust parameters heuristically; they do not prove independent calibration.
-
-## What would you improve next?
-
-Replace fixed performance-looking badges with traceable outputs and validate short-window queue behavior using measured data. Then evaluate bounded model-assisted proposals with the same deterministic checks and a suitable comparison baseline. Those are future steps.
+The current source branch, Cloud deployment, English packet and 114.069987-second English captured-screen recording are prepared. The authenticated form fields, required video hosting/upload route and actual submission acknowledgement remain to be completed. Main remains unmerged and the source is reviewed through PR #2.
