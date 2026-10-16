@@ -1,54 +1,43 @@
-# Rehearsal — 90-second demo plan
+# Rehearsal V2 — demo plan and completed recording
 
-This is an internal target, not a verified official duration limit. Record the actual current spatial studio and read only its actual results. The fixed “1,000 / survived” badge and preset-count labels are demonstration content, not measured performance.
+Current recording: `rehearsal-v2-3d-four-concepts-walkthrough-en.mp4`, **114.069987 seconds** (about 1:54), H.264 1920 × 1200 / AAC 48 kHz with English narration/captions. Seven states were actually captured locally from runtime `9930ea224245e307d60c5e09496c50ee6837447d`. Full ffmpeg decode passed. It is a captured-screen montage, not uninterrupted live video or a Cloud capture, and supersedes the prior 2.5D recording for this V2 packet. Public video hosting has not been created.
 
-Completed recording: `rehearsal-captured-screen-walkthrough-en.mp4`, 113.457 seconds (about 1:53), H.264 1920 × 1200 / AAC 48 kHz, English voice and captions. The seven-state montage uses actual local captures of runtime `4776c749a9703bd7fe07fd59a464e7a34d16b691` and is labeled as such. It includes manual image-region selection/confirmation and a 238,878-byte JSON export matching its current packet. This demonstrates manual mapping, not automatic recognition or real-world dimensional calibration. The private Library copy is saved; public video hosting remains pending. The actual duration differs from the 90-second planning script below, and neither is asserted to be the official limit.
+The outline below targets about 90 seconds for a live explanation. That target and the completed file duration are not asserted to be official limits.
 
-## 0:00–0:10 — the decision
+## 0:00–0:15 — the room and decision
 
-Show both layouts and the floating controls in the current responsive studio. Ambient ASCII is decorative and is not simulation output.
+> Before changing a store, a team needs to understand its customer journey. Rehearsal lets us orbit a real WebGL room, move furniture and inspect the operating assumptions.
 
-> Before changing a real store, a team needs to understand how layout and staffing assumptions affect the customer journey. Rehearsal makes those assumptions playable in two side-by-side spaces.
+Show right-drag orbit, zoom and left-drag selection. Camera-only actions must not be described as recalculating business results.
 
-## 0:10–0:30 — inspect the comparison
+## 0:15–0:35 — four different store concepts
 
-Point to the layouts, seed and ten-minute timeline; pause or scrub playback.
+> Coffee, bakery, matcha and wine have distinct procedural equipment, furniture and materials. These are modeled concepts, not reconstructions of a real photographed shop.
 
-> Both spaces use the same seeded synthetic arrivals and per-customer service requirements. We calculate paths, ordering and pickup queues, then show waits, completed journeys and walking distance.
+Show the espresso setting, oven/bread rack, tea/noren setting and bottle/bar setting. Read only current calculated metrics; improved visuals do not imply better predictive accuracy.
 
-## 0:30–0:50 — change one cause
+## 0:35–0:55 — 10,000 visible conditions
 
-Drag a display or table and wait for recalculation. Then demonstrate a staffing-only setting. Keep the same seed; state exactly what changed.
+> This map contains ten thousand unique condition combinations for the selected category. The fast screen classifies assumed station capacity. Its colors show arrival intensity, not profit or survival.
 
-> I can move this display and inspect the recalculated result. I can also change pickup staffing while keeping the other assumptions visible. These numbers are simulation outputs, not measured improvements in a real store.
+Select a condition and show its inputs. Apply it for the two detailed baseline/proposal runs; distinguish those two runs from the full population batch.
 
-Read actual values; an improvement is not guaranteed. Do not attribute a combined layout-and-staff change to layout alone.
+## 0:55–1:15 — actual detailed execution
 
-## 0:50–1:05 — show a constraint
+> The optional worker runs all ten thousand conditions on one snapshot of the proposed scene. It reports progress and can be cancelled. A complete result belongs to this scene and category, and changing inputs invalidates it.
 
-Change passage width or move an obstacle to inspect reachable/blocked states. If no blockage has actually been demonstrated, describe the control without claiming one.
+Show an actual completed receipt or genuine progress/cancel state. Never imply that a precomputed completion was rerun during a shorter shot. The independently observed coffee run completed 10,000 cases locally in 11,849.5 ms; that is one observed condition, not a general guarantee or all-category result.
 
-> Passage width is part of the geometry check. A blocked route is a visible result, not a zero-second wait. This footprint model is illustrative, not accessibility certification.
+## 1:15–1:30 — preserve evidence
 
-## 1:05–1:15 — ground a proposal manually
+> The downloaded receipt retains the condition IDs, scene and results. Five sampled worker results matched recomputation using the same core, but this remains a synthetic rehearsal. Real-world queue accuracy needs separate measurements.
 
-Open the image drawer, use a sample blueprint or non-sensitive image, draw a rectangle and confirm it before adding the obstacle.
+Export only the actual current complete receipt. A blocked route is not a successful zero wait. Avoid financial, survival, AI-image-analysis or live-market claims.
 
-> A floorplan image can support manual obstacle placement. I select and confirm the region myself; this is not automatic AI image recognition.
+## Evidence and publication
 
-## 1:15–1:30 — preserve the decision context
-
-Export JSON and verify the downloaded scenario. Prefer JSON because the text plan also contains a fixed illustrative survival-count sentence.
-
-> The exported scenario preserves scenes, settings, seed, results and revision. Our next step is to measure uncertain assumptions in the real space. This prototype supports that discussion; it is not a business forecast.
-
-## Release notes
-
-- Record the exact current Rehearsal spatial-studio build.
-- Label a montage or replay truthfully; do not call captured screenshots uninterrupted live video.
-- Describe Cloud deployment separately unless the recording actually checks the deployed HTTPS URL.
-- Cloud runtime `4776c749a9703bd7fe07fd59a464e7a34d16b691` is independently verified at https://thousand-stores-299086406033.asia-northeast3.run.app, revision `thousand-stores-00004-4rd`; the recording itself remains a local captured-screen montage.
-- Use English narration/submission text and explain the current Korean UI labels in English.
-- Preserve commit, recording time, seed/settings, downloaded JSON and video URL.
-- Current recording source target: `4776c749a9703bd7fe07fd59a464e7a34d16b691`; use the actual recorded source revision in the final receipt.
-- If a Google AI declaration is requested, distinguish Antigravity development from the studio's runtime, which performs no model call.
+- Runtime: `9930ea224245e307d60c5e09496c50ee6837447d`.
+- Preview: https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app; revision `rehearsal-3d-preview-00002-sjr`.
+- Local UI passed 15 checks and the separate final mesh recheck passed 2/2; public health/main/worker correspondence and nine bounded public interaction checks passed.
+- Actual recording filename/duration are above. Preserve capture receipts, source, input/scene and final video access information.
+- Fill authenticated form requirements and arrange approved public hosting if the form requires a video URL. Neither public hosting nor submission acceptance is claimed here.

@@ -1,108 +1,96 @@
-# Rehearsal
+# Rehearsal — 3D Store and 10,000-Condition Studio
 
-**Rehearse store layouts before changing the real space.**
+**Rehearse a store layout before changing the physical space.**
 
-Rehearsal is a browser-based 2.5D operational studio for prospective store owners and small teams. Put a baseline beside a proposal, move furniture, change staffing or demand, and inspect synthetic customer journeys, waits and completions. Export the scene and calculations to make the next team discussion concrete.
+Rehearsal combines a real Three.js WebGL room with a deterministic spatial/queue simulator. Coffee, bakery, matcha and wine have distinct procedural interiors. Orbit the room, drag furniture, compare staffing assumptions and open a map of 10,000 actual condition combinations. An optional worker executes the full detailed batch for the current proposed scene and exports its receipt.
 
-Developed in Antigravity, the studio starts at `index.html` and `src/main.ts`. Its TypeScript spatial/queue core is separated from the Canvas renderer.
+- [Live 3D studio](https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app)
+- [Submission source branch](https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-3d-preview)
+- [Draft review PR #2](https://github.com/devstar2637-hash/rehearsal-store/pull/2)
+- Runtime source: `9930ea224245e307d60c5e09496c50ee6837447d`
+- Cloud Run revision: `rehearsal-3d-preview-00002-sjr`, separate preview service in `h2gdm-hack26icn-2637` / `asia-northeast3`.
+
+Cloud health identifies this source, and deployed main JavaScript and worker bytes match the checked local build. Independent public interaction smoke passed 9/9; local UI and full-batch evidence are detailed below.
 
 ## Run locally
 
-Use Node.js 22 and npm. No model API key is needed for the spatial simulator.
+Use Node.js 22 and preserve any existing uncommitted Antigravity work before switching branches.
 
 ```bash
-git clone --branch codex/rehearsal-cloud-submission https://github.com/devstar2637-hash/rehearsal-store.git
+git clone --branch codex/rehearsal-3d-preview https://github.com/devstar2637-hash/rehearsal-store.git
 cd rehearsal-store
 npm ci --legacy-peer-deps --ignore-scripts --no-audit --no-fund
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal; the configured default is `http://localhost:3000`. To build and preview production assets:
-
-```bash
-npm run build
-npm run preview -- --host 0.0.0.0
-```
-
-Submission packaging uses `npm run start:cloud` to serve the Vite `dist/` build with Node.js 22 and the platform's `PORT`.
-
-Current runtime source: `4776c749a9703bd7fe07fd59a464e7a34d16b691`. Cloud Run revision `thousand-stores-00004-4rd` is ready with 100% traffic. [Open the deployed studio](https://thousand-stores-299086406033.asia-northeast3.run.app).
-
-Independent public HTTPS verification passed nine bounded checks: product/source identity, matching JavaScript bytes, actual default calculations and canvases, desktop/mobile fit, pending-export blocking, recalculated JSON correspondence and absence of application errors. This verifies the demonstrated workflow, not financial or field accuracy.
-
-For an authorized redeployment to the same approved project:
-
-```bash
-GCP_PROJECT=h2gdm-hack26icn-2637 bash infra/deploy.sh
-```
-
-The root Dockerfile builds with Node.js 22 and copies only production assets and the static host into the runtime image. Keep credentials outside the source tree.
-
-## Try the actual workflow
-
-1. Select a category template and design concept. The budget slider compares your entered budget with the template's fixed setup cost.
-2. Compare the baseline and proposed 12 m × 9 m spaces. Drag a display or table in the proposal.
-3. Open settings to change arrivals, service time, pickup staffing or passage width. The app recalculates a 600-second scenario.
-4. Read mean/P90 waits, completed customers, walking distance and blocked routes. Scrub the timeline or use walk mode.
-5. Optionally preview an image, manually mark a rectangle and confirm it before adding an obstacle. Its coordinates map to the assumed scene dimensions.
-6. Export JSON to preserve both scenes, settings, calculated results, seed and revision. The text crew plan is a discussion summary; its fixed template survival counts are illustrative, not simulation evidence.
-
-The studio uses compact floating controls, responsive spacing and typography. An original decorative Canvas ASCII field runs at at most eight frames per second, pauses while the document is hidden and stays static when reduced motion is requested. It is independent of the spatial calculations.
-
-## What is calculated
-
-- A* routes on a 0.1 m grid, with body-width footprint checks and no diagonal corner cutting.
-- Seeded exponential arrival gaps, per-customer synthetic service requirements and FIFO order/pickup queues.
-- The same seeded arrivals and customer requirements for the baseline and proposal, so layout/staffing assumptions can be compared.
-- Route reachability, mean/P90 observed waits, completions and customer-conservation checks.
-
-The model assumes fixed 1.15 m/s walking speed, fixed service stations and a short operating window. Some customers remain when the window ends. A footprint check is not accessibility, safety or building-code certification. Default layouts can also differ in staffing; isolate inputs before attributing a change to furniture alone.
-
-## Interpretation boundaries
-
-Category setup costs, scenario-count labels and the “1,000 / survived” badge are fixed demonstration content. They establish neither survival probabilities nor a completed 1,000-case evaluation. Addresses are scenario labels. Observation controls make heuristic parameter adjustments; entering observations does not prove independent calibration.
-
-Images support local preview and manual marking. Lighting and AC controls change the rendering. The active studio does not execute a model API, analyze photos automatically, retrieve address-level market data or simulate physical airflow. If requested by the submission form, declare product runtime model usage as none; the development model identifier has not been verified. Image handling uses browser objects; the page separately requests Google Fonts stylesheets.
-
-## Checks
+Open the Vite URL printed in the terminal (default port 3000).
 
 ```bash
 npm test
 npm run lint
 npm run build
+npm run preview -- --host 0.0.0.0
 ```
 
-At current runtime source `4776c749a9703bd7fe07fd59a464e7a34d16b691`, build, type checking and all 13 selected tests passed. Independent local UI verification passed eight functional checks and a three-check mobile recheck after a caption-overflow correction. The tested document/body widths fit 390 px and 1440 px viewports. Layout/staff changes, a 225,585-byte JSON export matching the current packet, pending-export blocking, reduced-motion static behavior and absence of ResizeObserver errors were verified within that scope. The spatial core, shared contracts, existing core tests and public fixtures are unchanged from source `5e9aa1f`.
+`npm run start:cloud` serves the Vite `dist/` build through a Node.js 22 static host using `PORT`. An authorized update to the separate preview service uses:
 
-`npm test` covers five formatting, three spatial-core and five static-host tests. Public Cloud verification passed nine bounded checks; the changed-staff case exported 226,136 bytes matching the current complete packet. The local recording also demonstrated manual image-region selection/confirmation and a matching 238,878-byte JSON export. These are different test inputs and file sizes, not throughput benchmarks. No model/API/POST call occurred in the public smoke check. The built public client had zero matches in the selective secret-pattern scan; this is not a guarantee about every possible secret. These checks do not establish field accuracy or financial validation.
+```bash
+GCP_PROJECT=h2gdm-hack26icn-2637 GCP_SERVICE=rehearsal-3d-preview bash infra/deploy.sh
+```
 
-## Source map
+Deployment archives the committed source; local uncommitted edits are not automatically included. Main remains unmerged, and PR review/merge is a separate decision.
 
-- `src/main.ts`: studio state, paired calculation, controls, manual image marking and export.
-- `src/engine/rehearsalCore.ts`: validation, geometry, A* routing and deterministic event simulation.
-- `src/engine/canvasRenderer.ts`: isometric drawing, people and visual controls.
-- `src/ui/asciiBackground.ts`: independent decorative Canvas ASCII field and motion/visibility handling.
-- `styles.css`: presentation.
-- `infra/staticServer.mjs`: production static host for the Vite build and deployment health metadata.
+## Try the studio
 
-## Submission packet
+1. Select coffee, bakery, matcha or wine. Inspect the distinct equipment, furniture and materials.
+2. Right-drag to orbit; use the wheel/middle drag to zoom. Left-click and drag a movable furniture mesh to change the proposed layout. Camera changes leave the simulation unchanged.
+3. Change staffing, arrivals, service time or passage width. Read the actual 600-second synthetic comparison, including blocked-route/null-wait states.
+4. Open the explorer: its 100 × 100 map represents 10,000 unique condition tuples for the selected category. Color indicates arrival intensity, not success or survival.
+5. Select and apply a row for a detailed baseline/proposal comparison. This is two core runs, not a completed population batch.
+6. Optionally start the full detailed batch. The worker runs 10,000 conditions on one snapshot of the current proposed scene, with progress and cancellation. Completed, current-scene receipts can be downloaded as `rehearsal-10000-detailed-results.json`.
+7. A local image may be previewed and manually marked/confirmed to add an obstacle. Ordinary JSON preserves scenes, settings, seed, results and calculation revision.
 
-- [Project description](docs/SUBMISSION_DESCRIPTION_EN.md)
-- [Copy-ready field answers](docs/SUBMISSION_FORM_FIELDS_EN.md)
-- [90-second demo script](docs/DEMO_SCRIPT_EN.md)
-- [Judges' questions](docs/JUDGES_QA_EN.md)
-- [Submission checklist](docs/SUBMISSION_CHECKLIST_EN.md)
+Coffee has espresso equipment; bakery has an oven and bread rack; matcha has tea equipment and noren panels; wine has a bottle library and bar seating. Models are procedural, not copied reference assets or AI-reconstructed floorplans.
 
-Submission source: [codex/rehearsal-cloud-submission](https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-cloud-submission). Review: [draft PR #1](https://github.com/devstar2637-hash/rehearsal-store/pull/1). Runtime source: `4776c749a9703bd7fe07fd59a464e7a34d16b691`.
+## What 10,000 means
 
-In Antigravity, preserve current uncommitted work before switching branches, then review the submission branch/PR. Record the exact submitted/deployed commit. Main remains unmerged; merging is a separate decision.
+The fast screen enumerates 10 arrival settings × 10 service settings × 5 order-staff settings × 5 pickup-staff settings × 4 body widths. All four categories have 10,000 unique IDs and parameter tuples each. Initial analytic classifications use expected station capacity; they do not calculate geometry, waiting, profit or survival. Width affects the detailed spatial model, not the analytic classification.
 
-Recorded walkthrough: `rehearsal-captured-screen-walkthrough-en.mp4`, **113.457 seconds**, H.264 1920 × 1200 with AAC 48 kHz audio, English narration and captions. It is a seven-state montage of actual local screens, not uninterrupted live video. The private Library copy was saved; a public video-hosting URL has not been created. The 90-second planning script is an internal target, not an official duration rule.
+The optional batch runs the existing core for every condition on **one proposed scene**, not both scenes or all four categories. Cancellation or timeout terminates work without a complete receipt; intermediate progress is not a successful final population. Changing the scene/category invalidates the receipt and prevents stale export.
 
-## Rights and next steps
+## Verification at source 9930ea2
 
-No project code license was declared in the inspected source. Public visibility is not itself a license; retain third-party dependency/font notices. The spatial simulation uses synthetic inputs.
+- Build, type check and 16 selected tests passed. Protected spatial core/shared contracts retain an empty diff from the reviewed source.
+- Independent local UI checks passed 15/15, with a separate final mesh recheck passing 2/2, covering four distinct category geometries/material signatures and captures, native candidate application, selected two-run comparison, cancel/stale guards and 1440/390 px fit without observed application errors.
+- One actual local coffee batch completed 10,000 unique conditions in **11,849.5 ms**: 2,500 route-blocked, 7,500 route-open and zero conservation failures. This is one observed browser/scene run, not a general latency guarantee or results for every category.
+- Five main-thread recomputations using the same core matched all checked compact worker-result fields. This checks worker correspondence, not an independent real-world oracle. The actual downloaded JSON matched the completed receipt.
+- Public health/source and main/worker byte correspondence are confirmed. Public interaction smoke passed 9/9, including four-category WebGL/10,000-condition views and one actual coffee worker completion. In that client-browser observation after public deployment, 10,000 rows completed in 74,711.6 ms and all compact rows matched the verified local population; its 2,928,628-byte JSON matched the receipt. This is client-side computation, not Cloud server or model latency.
 
-Next steps are to replace fixed performance-looking badges with traceable outputs, compare modeled queues with real measurements, and evaluate bounded model-assisted proposals using the same deterministic checks. These are future work, not completed features.
+The core uses 0.1 m A* routing, synthetic seeded arrivals/service requirements, fixed service stations and a 600-second window. Wider footprint checks are not safety/accessibility certification. The default layout-plus-staff comparison changes two causes; isolate inputs before attributing its difference to layout alone.
 
-Visual references: [House Control](https://github.com/0xProbabillity/house-control), [Gradient ASCII](https://reactbits.dev/backgrounds/gradient-ascii) and [Lucian UI prompting](https://lucianlabs.dev/uxui-prompt/). These informed presentation direction. The Canvas ASCII field is independently authored; this acknowledgement makes no claim to third-party code reuse or its licensing.
+## Boundaries
+
+The UI no longer presents the prior fixed survival figures as results. Current explorer counts are traceable generated/analytic/detailed counts, not real business probabilities. Setup costs are template assumptions; addresses are labels; photo obstacles are manually mapped. Lighting/AC and ambient ASCII are visual. This version adds no runtime model call, market-data feed, profit forecast or real-world calibration. Antigravity was the development workspace; no exact development model ID is inferred.
+
+## Source map and handoff
+
+- `src/main.ts`, `styles.css`: studio UI, state, category/explorer wiring and guarded export.
+- `src/engine/threeRenderer.ts`: WebGL room, category models, camera, raycast picking and drag-plane mapping.
+- `src/engine/rehearsalCore.ts`: deterministic spatial/queue authority.
+- `src/engine/scenarioExplorer.ts` and `.worker.ts`: condition grid, analytic screen and bounded detailed batch.
+- `src/ui/asciiBackground.ts`: independent decoration, at most eight frames/second, hidden/reduced-motion handling.
+- `infra/staticServer.mjs`: production static host and health/source metadata.
+
+[Agent handoff and exact APIs](docs/AGENT_HANDOFF_3D.md) · [3D scope](docs/THREE_PREVIEW.md). Concurrent main `4667997` D3 work is not incorporated; preserve it and integrate overlapping changes selectively rather than hard-resetting an Antigravity workspace.
+
+## Submission materials
+
+[Description](docs/SUBMISSION_DESCRIPTION_EN.md) · [Form answers](docs/SUBMISSION_FORM_FIELDS_EN.md) · [Demo](docs/DEMO_SCRIPT_EN.md) · [Judges Q&A](docs/JUDGES_QA_EN.md) · [Checklist](docs/SUBMISSION_CHECKLIST_EN.md).
+
+Current recording: `rehearsal-v2-3d-four-concepts-walkthrough-en.mp4`, **114.069987 seconds**, H.264 1920 × 1200 / AAC 48 kHz with English narration and captions. It is a seven-state montage of actual local V2 screens and supersedes the prior 2.5D recording for this packet. It does not depict an uninterrupted live session or a Cloud capture. Public video hosting has not been created; follow the actual form's link/file requirements. Five sentences and the 90-second planning script are internal formats, not verified official constraints.
+
+**Submit by 15:20 KST; be seated at the venue by 15:50 KST.** Form-field confirmation and actual submission acknowledgement remain incomplete.
+
+## Reference analysis and rights
+
+[House Control](https://github.com/0xProbabillity/house-control) informed architecture/presentation; reference source and assets were not copied. REA 6.5.0 performed static reference analysis across 26 relevant files, yielding 184 graph nodes and 434 edges. It did not execute the reference and is not an application runtime dependency. Other visual references: [Gradient ASCII](https://reactbits.dev/backgrounds/gradient-ascii) and [Lucian UI prompting](https://lucianlabs.dev/uxui-prompt/); ASCII is independently authored. No new project license is assigned; retain applicable dependency notices, including Three.js.

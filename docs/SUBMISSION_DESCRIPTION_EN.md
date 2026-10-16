@@ -1,9 +1,9 @@
-# Rehearsal — project description
+# Rehearsal — English project description
 
-Rehearsal is an interactive, responsive 2.5D studio for testing store layouts and operating assumptions before making physical changes. It compares a baseline and a proposed layout using the same seeded synthetic arrivals and per-customer service requirements. Users can move furniture and adjust staffing, demand, service time and passage width while inspecting calculated waits, throughput and blocked routes. A floorplan image can be previewed and manually marked to add obstacles, and the scenario can be exported as JSON with its scenes, settings, results and revision. These are illustrative browser-based simulations, with fixed demonstration badges distinguished from results, rather than live AI analysis, address-level market data or validated business forecasts.
+Rehearsal is a WebGL 3D studio for testing store layouts and operating assumptions before changing a physical space. Users can orbit and edit four distinct procedural interiors—coffee, bakery, matcha and wine—while comparing synthetic customer paths, waits and completions. An explorer displays 10,000 unique condition combinations per category and separates fast analytic capacity screening from detailed queue simulation. Users can apply one condition to a paired comparison or run an optional cancellable worker batch of 10,000 conditions on the current proposed scene and export its receipt. The result is an inspectable operating rehearsal under explicit synthetic assumptions, not a live AI recommendation, profit forecast or real-world survival probability.
 
-The five-sentence format is our internal preparation format, not a verified official form constraint. Cloud deployment, final track and form limits are recorded separately. If requested, the Google AI usage declaration must distinguish Antigravity development from runtime model calls; no runtime model call is demonstrated by the studio.
+Internal format: five sentences; actual form limits remain unconfirmed.
 
-Submission source: https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-cloud-submission · Runtime `4776c749a9703bd7fe07fd59a464e7a34d16b691` · Review: https://github.com/devstar2637-hash/rehearsal-store/pull/1.
+Source: https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-3d-preview · Runtime `9930ea224245e307d60c5e09496c50ee6837447d` · Review: https://github.com/devstar2637-hash/rehearsal-store/pull/2.
 
-Demo: https://thousand-stores-299086406033.asia-northeast3.run.app · Cloud revision `thousand-stores-00004-4rd`, 100% traffic; nine bounded public HTTPS checks passed.
+Demo: https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app · revision `rehearsal-3d-preview-00002-sjr`. Public source/main/worker correspondence and nine bounded public interaction checks passed, including one actual coffee 10,000-condition client-worker completion.
