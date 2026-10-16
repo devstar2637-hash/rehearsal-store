@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { makeScene, run, canStand } from "./rehearsalCore.ts";
-import { buildTenKCells } from "./tenKMatrixEngine.ts";
+import { buildTenKCells, findBenchmarkStoreCells } from "./tenKMatrixEngine.ts";
 
 test("seed 42, 10min, 4 arrivals/min matches exact reference calculations for baseline, layout-only, and layout+staff", () => {
   const baseScene = makeScene("baseline");
@@ -100,5 +100,10 @@ test("buildTenKCells generates 10,000 parallel store scenario cells across 500 f
   assert.equal(cells[9999].variantId, 20);
   assert.equal(stats.propSurvived > stats.baseSurvived, true);
   assert.equal(stats.rescuedCount > 4000, true);
+
+  const benches = findBenchmarkStoreCells(cells);
+  assert.equal(benches.optimal.proposedSurvived, true);
+  assert.equal(benches.rescued.rescuedByDesign, true);
+  assert.equal(benches.worst.proposedSurvived, false);
 });
 

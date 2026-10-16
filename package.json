@@ -8,7 +8,7 @@
     "build": "npm run sync:cloud-ui && vite build",
     "build:cloud-ui": "npm run sync:cloud-ui && tailwindcss -i web/client/styles.css -o dist/web/client/styles.css --minify && node web/buildClient.mjs",
     "start": "node server.ts",
-    "test": "node --test src/format.test.ts src/engine/rehearsalCore.test.ts src/engine/backendSync.test.ts server.test.ts",
+    "test": "node --test src/format.test.ts src/engine/rehearsalCore.test.ts src/engine/tenKMatrix.test.ts src/engine/backendSync.test.ts server.test.ts",
     "sync:cloud-ui": "node web/syncStudioClient.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
