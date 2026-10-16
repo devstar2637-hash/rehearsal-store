@@ -1,70 +1,58 @@
-# Rehearsal
+# Rehearsal — WebGL 3D Preview (V2)
 
-**Rehearse store layouts before changing the real space.**
+**Rehearse a store layout in a real 3D room before changing the physical space.**
 
-Rehearsal is a browser-based 2.5D operational studio for prospective store owners and small teams. Put a baseline beside a proposal, move furniture, change staffing or demand, and inspect synthetic customer journeys, waits and completions. Export the scene and calculations to make the next team discussion concrete.
+This preview adds a Three.js WebGL scene to Rehearsal's deterministic spatial/queue simulator. A larger room studio contains procedural furniture and animated customer representations, with a compact baseline view for comparison. Orbit the camera, inspect a mesh and move furniture while retaining the existing synthetic operating assumptions.
 
-Developed in Antigravity, the studio starts at `index.html` and `src/main.ts`. Its TypeScript spatial/queue core is separated from the Canvas renderer.
+Preview: https://rehearsal-3d-preview-299086406033.asia-northeast3.run.app
+
+Branch: `codex/rehearsal-3d-preview`. Runtime source: `2637d93fea7245b9a662809107ee2ad1b3e2382d`. Draft review: https://github.com/devstar2637-hash/rehearsal-store/pull/2. The previous V1 submission packet and 2.5D video describe V1 until the new preview is reviewed.
 
 ## Run locally
 
-Use Node.js 22 and npm. No model API key is needed for the spatial simulator.
+Use Node.js 22 and npm. Select the preview branch after preserving any uncommitted Antigravity work.
 
 ```bash
-git clone --branch codex/rehearsal-cloud-submission https://github.com/devstar2637-hash/rehearsal-store.git
-cd rehearsal-store
 npm ci --legacy-peer-deps --ignore-scripts --no-audit --no-fund
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal; the configured default is `http://localhost:3000`. To build and preview production assets:
+Open the Vite URL printed in the terminal (configured default port 3000). To build or preview production assets:
 
 ```bash
 npm run build
 npm run preview -- --host 0.0.0.0
 ```
 
-Submission packaging uses `npm run start:cloud` to serve the Vite `dist/` build with Node.js 22 and the platform's `PORT`.
+The production host uses `npm run start:cloud`, Node.js 22, the Vite `dist/` build and the platform's `PORT`. This preview is deployed to the separate `rehearsal-3d-preview` Cloud Run service in project `h2gdm-hack26icn-2637`, region `asia-northeast3`, revision `rehearsal-3d-preview-00001-dmq`. Public health identifies the runtime source above; deployed and checked local JavaScript bytes match. The deployment script requires `GCP_PROJECT` and accepts `GCP_SERVICE`; select the preview service explicitly because its default names the prior service.
 
-Current runtime source: `4776c749a9703bd7fe07fd59a464e7a34d16b691`. Cloud Run revision `thousand-stores-00004-4rd` is ready with 100% traffic. [Open the deployed studio](https://thousand-stores-299086406033.asia-northeast3.run.app).
+## Interact with the room
 
-Independent public HTTPS verification passed nine bounded checks: product/source identity, matching JavaScript bytes, actual default calculations and canvases, desktop/mobile fit, pending-export blocking, recalculated JSON correspondence and absence of application errors. This verifies the demonstrated workflow, not financial or field accuracy.
+- **Right-drag:** orbit the perspective camera.
+- **Mouse wheel / middle-drag:** zoom within the configured camera limits.
+- **Left-click a movable furniture mesh, then drag:** select and reposition it on its elevation-aware drag plane through the existing placement flow.
+- **Two-finger gesture:** camera dolly/rotation where supported by the browser/device.
+- Choose category/design templates and change staffing, arrivals, service time or passage width to recalculate the short operating scenario.
+- Inspect mean/P90 waits, completions, walking distance and blocked-route status; use playback or walk mode to inspect the modeled journey.
+- Preview an image, manually mark and confirm a rectangle, then add its obstacle to the assumed room geometry.
+- Export JSON to preserve baseline/proposal scenes, settings, calculated results, seed and revision.
 
-For an authorized redeployment to the same approved project:
+The camera, furniture meshes, shadows and room materials are actual WebGL rendering. Their appearance does not add physical simulation fidelity. Lighting/AC presentation remains visual rather than a validated illumination, airflow or thermal model.
 
-```bash
-GCP_PROJECT=h2gdm-hack26icn-2637 bash infra/deploy.sh
-```
+## Architecture and scope
 
-The root Dockerfile builds with Node.js 22 and copies only production assets and the static host into the runtime image. Keep credentials outside the source tree.
+- `index.html` and `src/main.ts`: studio entry, state, controls, paired simulation and export.
+- `src/engine/threeRenderer.ts`: Three.js scene, perspective camera, OrbitControls, procedural room/furniture, raycast picking and drag-plane mapping.
+- `src/engine/rehearsalCore.ts`: existing deterministic geometry, A* routes, seeded arrivals and FIFO order/pickup queues.
+- `src/engine/canvasRenderer.ts`: retained Canvas utilities such as the sample blueprint helper; not proof that the new world scene is a 2D projection.
+- `src/ui/asciiBackground.ts`: independent decorative background.
+- `infra/staticServer.mjs`: production static host.
 
-## Try the actual workflow
+The spatial/queue core remains the calculation authority. It uses a 0.1 m grid, synthetic seeded arrival/service requirements, fixed service stations and a 600-second operating window. The rendering upgrade does not establish improved prediction, financial calibration or real-world queue accuracy.
 
-1. Select a category template and design concept. The budget slider compares your entered budget with the template's fixed setup cost.
-2. Compare the baseline and proposed 12 m × 9 m spaces. Drag a display or table in the proposal.
-3. Open settings to change arrivals, service time, pickup staffing or passage width. The app recalculates a 600-second scenario.
-4. Read mean/P90 waits, completed customers, walking distance and blocked routes. Scrub the timeline or use walk mode.
-5. Optionally preview an image, manually mark a rectangle and confirm it before adding an obstacle. Its coordinates map to the assumed scene dimensions.
-6. Export JSON to preserve both scenes, settings, calculated results, seed and revision. The text crew plan is a discussion summary; its fixed template survival counts are illustrative, not simulation evidence.
+Category setup costs, preset-count labels and survival badges are fixed demonstration examples. Addresses are scenario labels. Photos support manual mapping, not automatic AI reconstruction or measured dimensional extraction. The active studio has no model API call or live address-level data integration. These boundaries remain unchanged in V2.
 
-The studio uses compact floating controls, responsive spacing and typography. An original decorative Canvas ASCII field runs at at most eight frames per second, pauses while the document is hidden and stays static when reduced motion is requested. It is independent of the spatial calculations.
-
-## What is calculated
-
-- A* routes on a 0.1 m grid, with body-width footprint checks and no diagonal corner cutting.
-- Seeded exponential arrival gaps, per-customer synthetic service requirements and FIFO order/pickup queues.
-- The same seeded arrivals and customer requirements for the baseline and proposal, so layout/staffing assumptions can be compared.
-- Route reachability, mean/P90 observed waits, completions and customer-conservation checks.
-
-The model assumes fixed 1.15 m/s walking speed, fixed service stations and a short operating window. Some customers remain when the window ends. A footprint check is not accessibility, safety or building-code certification. Default layouts can also differ in staffing; isolate inputs before attributing a change to furniture alone.
-
-## Interpretation boundaries
-
-Category setup costs, scenario-count labels and the “1,000 / survived” badge are fixed demonstration content. They establish neither survival probabilities nor a completed 1,000-case evaluation. Addresses are scenario labels. Observation controls make heuristic parameter adjustments; entering observations does not prove independent calibration.
-
-Images support local preview and manual marking. Lighting and AC controls change the rendering. The active studio does not execute a model API, analyze photos automatically, retrieve address-level market data or simulate physical airflow. If requested by the submission form, declare product runtime model usage as none; the development model identifier has not been verified. Image handling uses browser objects; the page separately requests Google Fonts stylesheets.
-
-## Checks
+## Verification
 
 ```bash
 npm test
@@ -72,37 +60,24 @@ npm run lint
 npm run build
 ```
 
-At current runtime source `4776c749a9703bd7fe07fd59a464e7a34d16b691`, build, type checking and all 13 selected tests passed. Independent local UI verification passed eight functional checks and a three-check mobile recheck after a caption-overflow correction. The tested document/body widths fit 390 px and 1440 px viewports. Layout/staff changes, a 225,585-byte JSON export matching the current packet, pending-export blocking, reduced-motion static behavior and absence of ResizeObserver errors were verified within that scope. The spatial core, shared contracts, existing core tests and public fixtures are unchanged from source `5e9aa1f`.
+For runtime source `2637d93f`, build, type check and the selected 13 tests pass. Actual-browser checks observe WebGL2 rendering, right-drag orbit and wheel zoom without changing simulation data, native mesh drag moving an object and updating its revision, seed-42 reference outputs, pending-export blocking and JSON correspondence. Desktop 1440 px and mobile 390 px layouts show no horizontal overflow. Public health and JavaScript byte correspondence are confirmed; the separate public-browser smoke result is recorded in the preview scope document. No performance gain, new accuracy result or runtime-AI usage is claimed.
 
-`npm test` covers five formatting, three spatial-core and five static-host tests. Public Cloud verification passed nine bounded checks; the changed-staff case exported 226,136 bytes matching the current complete packet. The local recording also demonstrated manual image-region selection/confirmation and a matching 238,878-byte JSON export. These are different test inputs and file sizes, not throughput benchmarks. No model/API/POST call occurred in the public smoke check. The built public client had zero matches in the selective secret-pattern scan; this is not a guarantee about every possible secret. These checks do not establish field accuracy or financial validation.
+See [3D preview scope and acceptance checks](docs/THREE_PREVIEW.md).
 
-## Source map
+## V1 submission materials — prior 2.5D product
 
-- `src/main.ts`: studio state, paired calculation, controls, manual image marking and export.
-- `src/engine/rehearsalCore.ts`: validation, geometry, A* routing and deterministic event simulation.
-- `src/engine/canvasRenderer.ts`: isometric drawing, people and visual controls.
-- `src/ui/asciiBackground.ts`: independent decorative Canvas ASCII field and motion/visibility handling.
-- `styles.css`: presentation.
-- `infra/staticServer.mjs`: production static host for the Vite build and deployment health metadata.
+The following remain V1 documents and have not been rewritten as V2 claims:
 
-## Submission packet
+- [V1 project description](docs/SUBMISSION_DESCRIPTION_EN.md)
+- [V1 form answers](docs/SUBMISSION_FORM_FIELDS_EN.md)
+- [V1 demo plan](docs/DEMO_SCRIPT_EN.md)
+- [V1 judges' answers](docs/JUDGES_QA_EN.md)
+- [V1 checklist](docs/SUBMISSION_CHECKLIST_EN.md)
 
-- [Project description](docs/SUBMISSION_DESCRIPTION_EN.md)
-- [Copy-ready field answers](docs/SUBMISSION_FORM_FIELDS_EN.md)
-- [90-second demo script](docs/DEMO_SCRIPT_EN.md)
-- [Judges' questions](docs/JUDGES_QA_EN.md)
-- [Submission checklist](docs/SUBMISSION_CHECKLIST_EN.md)
+V1 source: https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-cloud-submission · V1 review: https://github.com/devstar2637-hash/rehearsal-store/pull/1. Main remains unmerged. The existing `rehearsal-captured-screen-walkthrough-en.mp4` is the 113.457-second 2.5D V1 recording, not a recording of this 3D preview.
 
-Submission source: [codex/rehearsal-cloud-submission](https://github.com/devstar2637-hash/rehearsal-store/tree/codex/rehearsal-cloud-submission). Review: [draft PR #1](https://github.com/devstar2637-hash/rehearsal-store/pull/1). Runtime source: `4776c749a9703bd7fe07fd59a464e7a34d16b691`.
+## Reference analysis and rights
 
-In Antigravity, preserve current uncommitted work before switching branches, then review the submission branch/PR. Record the exact submitted/deployed commit. Main remains unmerged; merging is a separate decision.
+[House Control](https://github.com/0xProbabillity/house-control) informed architecture and presentation. The preview's room/furniture models are procedural implementations; reference source and assets were not copied. REA 6.5.0 successfully analyzed the reference's static JavaScript: 26 relevant files, 184 graph nodes and 434 edges. This analysis did not execute the reference app and proves no runtime equivalence. REA is an analysis tool, not a dependency or service in Rehearsal's runtime.
 
-Recorded walkthrough: `rehearsal-captured-screen-walkthrough-en.mp4`, **113.457 seconds**, H.264 1920 × 1200 with AAC 48 kHz audio, English narration and captions. It is a seven-state montage of actual local screens, not uninterrupted live video. The private Library copy was saved; a public video-hosting URL has not been created. The 90-second planning script is an internal target, not an official duration rule.
-
-## Rights and next steps
-
-No project code license was declared in the inspected source. Public visibility is not itself a license; retain third-party dependency/font notices. The spatial simulation uses synthetic inputs.
-
-Next steps are to replace fixed performance-looking badges with traceable outputs, compare modeled queues with real measurements, and evaluate bounded model-assisted proposals using the same deterministic checks. These are future work, not completed features.
-
-Visual references: [House Control](https://github.com/0xProbabillity/house-control), [Gradient ASCII](https://reactbits.dev/backgrounds/gradient-ascii) and [Lucian UI prompting](https://lucianlabs.dev/uxui-prompt/). These informed presentation direction. The Canvas ASCII field is independently authored; this acknowledgement makes no claim to third-party code reuse or its licensing.
+Other visual references: [Gradient ASCII](https://reactbits.dev/backgrounds/gradient-ascii) and [Lucian UI prompting](https://lucianlabs.dev/uxui-prompt/). The decorative ASCII field is independently authored. No third-party code-reuse or license entitlement is inferred from these acknowledgements. No new project code license is assigned; retain applicable dependency notices, including Three.js.
