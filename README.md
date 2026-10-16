@@ -1,6 +1,6 @@
 # A Thousand Stores — Store Design Rehearsal & Spatial Stress-Testing Studio
 
-Run: `npm install`, `npm run dev`, open `http://localhost:3000`.
+Requires Node 22.18+ (verified on Node 24). Run: `npm ci`, `npm run dev`, open `http://localhost:3000`.
 
 ## Preview and production sync
 
@@ -11,20 +11,34 @@ Run: `npm install`, `npm run dev`, open `http://localhost:3000`.
 - `npm run build` creates the Vite app; `npm run build:cloud-ui` creates
   the compatible `/app.js` and `/styles.css` layout used by GDH.
 - The server proxies financial engine calls to `ENGINE_BASE_URL`, defaulting
-  to the existing thousand-stores Cloud Run service. An unavailable backend
+  to https://thousand-stores-personal.vercel.app, which runs the GDH engine
+  independently of the expiring hackathon Cloud Run project. An unavailable backend
   returns an explicit error rather than simulated success.
 - Pull external GitHub changes into the AI Studio workspace using
   Settings > GitHub. Saving code to GitHub and deploying Cloud Run are
   separate operations.
 - The spatial wafer and swarm are illustrative; the separate 36-month engine
   status reports actual scenario outcomes and marks cached replay results.
+- Selecting a wafer cell compares its assumed inflow against the captured
+  layout without inventing fixture coordinates or regenerating the wafer.
+  This is not a verified replay of that cell's 3D trajectory. PNGs and reports
+  keep that distinction and show `Blocked`/`N/A` for unavailable spatial metrics.
+- Browser regression check: start the dev server, run `npx playwright install chromium`
+  once, then `npm run test:ui -- http://localhost:3000`. The same command accepts
+  a deployed URL and performs a fresh deterministic financial-engine run.
 
 Full integration flow:
-https://github.com/devstar2637-hash/GDH/blob/main/docs/UI_SYNC.md
+https://github.com/rarehotdog/GDH/blob/main/docs/PERSONAL_HOSTING.md
+
+The preserved UI snapshot is upstream commit `83f4c346` (2026-10-16 20:25:16 KST).
+After pulling, remove or update any old `ENGINE_BASE_URL` override in AI Studio's
+environment settings; otherwise it still takes precedence over the new default.
+Personal repositories: https://github.com/rarehotdog/rehearsal-store and
+https://github.com/rarehotdog/GDH.
 
 ## Architecture & Core Modules
 - **3D Spatial Floorplan Internals (`src/engine/threeFloorplanStage.ts`)**: Interactive Three.js WebGL rotatable store floorplan with 16-slot LED queue buffer bars, 24-cell shared walkway sensor matrix, real-time customer agents, and CAD dimension rulers.
 - **2.5D Isometric & 2D CAD Blueprint (`src/engine/canvasRenderer.ts`)**: Dual Baseline vs. Proposed floorplan comparison with 360° orbit, congestion heatmap, lighting, and HVAC airflow overlays.
 - **10,000-Store Monte Carlo & Telemetry (`src/engine/d3StatsCharts.ts`)**: D3.js survival distribution chart across 6 operational scenarios and 6 real-time KPI sparklines.
 - **Discrete-Event Simulation Core (`src/engine/rehearsalCore.ts`)**: Seeded A* pathfinding, queue buffer dynamics, and spatial clearance validation.
-- **Server Endpoints (`server.ts`, Node 20 `node:http`)**: `POST /run` → `{ runId }`, `GET /runs/:id` → `{ result: RunResult }`, `GET /runs/:id/export?format=csv`.
+- **Server Endpoints (`server.ts`, Node 22.18+ `node:http`)**: `POST /run` → `{ runId }`, `GET /runs/:id` → `{ result: RunResult }`, `GET /runs/:id/export?format=csv`.

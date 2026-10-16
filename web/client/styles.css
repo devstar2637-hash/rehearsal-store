@@ -2177,4 +2177,10 @@ button:disabled {
     white-space: normal;
     overflow-wrap: anywhere;
   }
+  .pgrun-export-drawer {
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+  }
 }

@@ -28,7 +28,10 @@ export interface StoreRunCell {
   rescuedByDesign: boolean;
   marginalRisk: boolean;
   monthlyNetKrwM: number; // in KRW millions (or USD eq)
-  breakEvenMonth: number;
+  breakEvenMonth: number | null;
+  month36BaselineUsdK: number;
+  month36ProposedUsdK: number;
+  month36DeltaUsdK: number;
   failureReason: string;
 }
 
@@ -185,9 +188,12 @@ export function buildTenKCells(cfg: TenKMatrixConfig): {
       ? +(4.2 + (1 - score) * 9.6 + r3 * 2.1).toFixed(1)
       : +(-6.8 + (1 - score) * 5.2).toFixed(1);
 
-    const breakEvenMonth = proposedSurvived
-      ? Math.max(5, Math.min(28, Math.round(8 + score * 14)))
-      : 36;
+    const cashflow = computeCell36MonthTrajectory({
+      monthlyNetKrwM,
+      baselineSurvived,
+      baselineWaitSec,
+      proposedWaitSec,
+    });
 
     let failureReason = "Optimal Flow · Zero Bottleneck";
     if (!proposedSurvived) {
@@ -232,7 +238,10 @@ export function buildTenKCells(cfg: TenKMatrixConfig): {
       rescuedByDesign,
       marginalRisk,
       monthlyNetKrwM,
-      breakEvenMonth,
+      breakEvenMonth: cashflow.breakEvenMonth,
+      month36BaselineUsdK: cashflow.month36BaselineUsdK,
+      month36ProposedUsdK: cashflow.month36ProposedUsdK,
+      month36DeltaUsdK: cashflow.month36DeltaUsdK,
       failureReason,
     };
   }
@@ -249,6 +258,20 @@ export function buildTenKCells(cfg: TenKMatrixConfig): {
       sweepProgress: 1,
     },
   };
+}
+
+function optimalStoreScore(cell: StoreRunCell): number {
+  return cell.monthlyNetKrwM * 3 - cell.proposedWaitSec * 0.8 + cell.aisleClearanceM * 15;
+}
+
+export function findTop100StoreCells(cells: readonly StoreRunCell[]): StoreRunCell[] {
+  // Rank every run so the 10K matrix always has exactly 100 top-percentile cells.
+  return [...cells].sort((a, b) =>
+    Number(b.proposedSurvived) - Number(a.proposedSurvived) ||
+    Number(a.marginalRisk) - Number(b.marginalRisk) ||
+    optimalStoreScore(b) - optimalStoreScore(a) ||
+    a.runIndex - b.runIndex
+  ).slice(0, 100);
 }
 
 export function findBenchmarkStoreCells(cells: StoreRunCell[]): {
@@ -270,8 +293,7 @@ export function findBenchmarkStoreCells(cells: StoreRunCell[]): {
     if (!c) continue;
 
     if (c.proposedSurvived && !c.marginalRisk) {
-      const optScore =
-        c.monthlyNetKrwM * 3 - c.proposedWaitSec * 0.8 + c.aisleClearanceM * 15;
+      const optScore = optimalStoreScore(c);
       if (optScore > bestOptScore) {
         bestOptScore = optScore;
         optimal = c;
@@ -300,7 +322,9 @@ export function findBenchmarkStoreCells(cells: StoreRunCell[]): {
 }
 
 export function computeCell36MonthTrajectory(
-  cell: StoreRunCell
+  cell: Pick<StoreRunCell,
+    "monthlyNetKrwM" | "baselineSurvived" | "baselineWaitSec" | "proposedWaitSec"
+  >
 ): Cell36MonthTrajectory {
   const months = 36;
   const initialCapexUsdK = 66; // Deposit + Fit-out baseline in $k
@@ -339,9 +363,7 @@ export function computeCell36MonthTrajectory(
     initialCapexUsdK,
     baselineCumUsdK,
     proposedCumUsdK,
-    breakEvenMonth: cell.proposedSurvived
-      ? breakEvenMonth ?? cell.breakEvenMonth
-      : null,
+    breakEvenMonth,
     month36BaselineUsdK,
     month36ProposedUsdK,
     month36DeltaUsdK: Number(
@@ -371,12 +393,17 @@ export function exportTenKCellsCsv(cells: StoreRunCell[]): string {
     "monthly_net_usd_k",
     "break_even_month",
     "diagnosis",
+    "month36_baseline_usd_k",
+    "month36_proposed_usd_k",
+    "month36_delta_usd_k",
+    "source_tag",
   ].join(",");
 
   const rows: string[] = [header];
   for (let i = 0; i < cells.length; i++) {
     const c = cells[i];
     if (!c) continue;
+    const cashflow = computeCell36MonthTrajectory(c);
     const usdNet = (c.monthlyNetKrwM * 0.75).toFixed(2);
     const waitDelta = c.proposedWaitSec - c.baselineWaitSec;
     rows.push(
@@ -398,8 +425,12 @@ export function exportTenKCellsCsv(cells: StoreRunCell[]): string {
         c.proposedSurvived ? 1 : 0,
         c.rescuedByDesign ? 1 : 0,
         usdNet,
-        c.breakEvenMonth,
+        cashflow.breakEvenMonth,
         `"${c.failureReason.replace(/"/g, '""')}"`,
+        cashflow.month36BaselineUsdK,
+        cashflow.month36ProposedUsdK,
+        cashflow.month36DeltaUsdK,
+        "assumed",
       ].join(",")
     );
   }
@@ -530,6 +561,7 @@ export function createTenKMatrixEngine(
 ): TenKMatrixController {
   const ctx = canvas.getContext("2d")!;
   let cells: StoreRunCell[] = new Array(10000);
+  let top100RunIndices = new Set<number>();
   let viewMode: WaferViewMode = "proposed";
   let filterMode: WaferFilterMode = "all";
   let simTimeSec = 0;
@@ -559,6 +591,7 @@ export function createTenKMatrixEngine(
     const built = buildTenKCells(cfg);
     cells = built.cells;
     totalStats = built.stats;
+    top100RunIndices = new Set(findTop100StoreCells(cells).map((cell) => cell.runIndex));
   }
 
   function matchesFilter(cell: StoreRunCell): boolean {
@@ -566,27 +599,22 @@ export function createTenKMatrixEngine(
     if (filterMode === "rescued") return cell.rescuedByDesign;
     if (filterMode === "failed") return !cell.proposedSurvived;
     if (filterMode === "top100") {
-      return (
-        cell.proposedSurvived &&
-        !cell.marginalRisk &&
-        cell.proposedWaitSec <= 20 &&
-        cell.aisleClearanceM >= 1.22
-      );
+      return top100RunIndices.has(cell.runIndex);
     }
     return true;
   }
 
   function getCellColor(cell: StoreRunCell, idx: number, nowMs: number): string {
+    if (!matchesFilter(cell)) {
+      return "#1e1e23";
+    }
+
     const cellNorm = idx / 10000;
     if (sweepProgress < 1 && Math.abs(cellNorm - sweepProgress) < 0.04) {
       return "#ffffff"; // Crisp white-hot leading wavefront across the 10,000 cells
     }
     if (sweepProgress < 1 && cellNorm > sweepProgress) {
       return cell.proposedSurvived ? "rgba(234, 88, 12, 0.35)" : "#232329";
-    }
-
-    if (!matchesFilter(cell)) {
-      return "#1e1e23";
     }
 
     // Time-based dynamic pulse synced with simulation clock

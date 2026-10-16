@@ -8,7 +8,8 @@
     "build": "npm run sync:cloud-ui && vite build",
     "build:cloud-ui": "npm run sync:cloud-ui && tailwindcss -i web/client/styles.css -o dist/web/client/styles.css --minify && node web/buildClient.mjs",
     "start": "node server.ts",
-    "test": "node --test src/format.test.ts src/engine/rehearsalCore.test.ts src/engine/tenKMatrix.test.ts src/engine/backendSync.test.ts server.test.ts",
+    "test": "node --test src/format.test.ts src/engine/rehearsalCore.test.ts src/engine/tenKMatrix.test.ts src/engine/backendSync.test.ts src/engine/spatialTelemetry.test.ts server.test.ts",
+    "test:ui": "node scripts/verify-ui.mjs",
     "sync:cloud-ui": "node web/syncStudioClient.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -33,14 +34,15 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.28.0",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "typescript": "^7.0.2"
   }
 }

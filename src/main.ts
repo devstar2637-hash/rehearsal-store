@@ -30,6 +30,7 @@ import {
   type WaferViewMode,
 } from "./engine/tenKMatrixEngine.ts";
 import { summarizeBackendRun } from "./engine/backendSync.ts";
+import { spatialMetricSummary, spatialWaitDelta } from "./engine/spatialTelemetry.ts";
 
 declare global {
   interface Window {
@@ -1474,35 +1475,32 @@ function initStudio(): void {
   });
 
   let inspectedCell: StoreRunCell | null = null;
+  let matrixSceneSnapshot = {
+    base: structuredClone(state.base), plan: structuredClone(state.plan),
+    seed: state.seed, pickupStaff: state.pickupStaff, body: state.body,
+  };
 
   function applyStoreCellToStage(cell: StoreRunCell): void {
     state.preset = cell.regimeId;
-    state.arrival = Math.max(1, Math.min(8, Math.round(cell.arrivalRatePerMin * 2) / 2));
-    state.body = cell.regimeId === "stroller" ? 1.2 : 0.65;
-    state.pickupStaff = cell.serviceCapacityPerMin >= 4.4 ? 2 : 1;
-    state.threeMode = cell.proposedSurvived ? "proposed" : "baseline";
-
-    const disp = state.plan.objects.find((o) => o.id === "display");
-    if (disp && disp.movable) {
-      if (cell.proposedSurvived) {
-        disp.x = Number((5.2 + ((cell.familyId % 5) - 2) * 0.16).toFixed(1));
-        disp.y = Number((2.5 + ((cell.variantId % 3) - 1) * 0.14).toFixed(1));
-      } else {
-        disp.x = 4.2;
-        disp.y = 5.8;
-      }
-    }
+    state.arrival = cell.arrivalRatePerMin;
+    state.base = structuredClone(matrixSceneSnapshot.base);
+    state.plan = structuredClone(matrixSceneSnapshot.plan);
+    state.seed = matrixSceneSnapshot.seed;
+    state.body = cell.regimeId === "stroller" ? 1.2 : matrixSceneSnapshot.body;
+    state.pickupStaff = matrixSceneSnapshot.pickupStaff;
+    state.threeMode = "proposed";
 
     $<HTMLInputElement>("arrivals").value = String(state.arrival);
     $<HTMLSelectElement>("bodyWidth").value = state.body.toFixed(2);
     $<HTMLInputElement>("pickupStaff").value = String(state.pickupStaff);
-    recompute();
+    // Compare against the captured layout without regenerating the selected wafer.
+    recompute(false);
 
     const padRun = String(cell.runIndex).padStart(5, "0");
     const padFam = String(cell.familyId).padStart(3, "0");
-    $("threeInfoTitle").textContent = `LOADED STORE RUN #${padRun} · FAMILY #${padFam}`;
-    $("threeInfoSub").textContent = `${cell.regimeCode} (${cell.regimeLabel}) · Wait ${cell.baselineWaitSec}s → ${cell.proposedWaitSec}s · Clearance ${cell.aisleClearanceM}m`;
-    $("threeInfoBody").textContent = `Diagnosis: ${cell.failureReason}. Payback Month ${cell.breakEvenMonth} · Inflow ${cell.arrivalRatePerMin} pax/min vs Service Cap ${cell.serviceCapacityPerMin} pax/min.`;
+    $("threeInfoTitle").textContent = `PREVIEW STORE RUN #${padRun} · FAMILY #${padFam} [assumed]`;
+    $("threeInfoSub").textContent = `${cell.regimeCode} (${cell.regimeLabel}) · Wafer wait ${cell.baselineWaitSec}s → ${cell.proposedWaitSec}s [assumed]`;
+    $("threeInfoBody").textContent = `Captured layout comparison: ${spatialMetricSummary(state.results?.plan)}. Wafer economics are separate assumptions, not a verified per-cell 3D trajectory. ${cell.failureReason}.`;
   }
 
   const tenKMatrix = createTenKMatrixEngine(
@@ -1542,8 +1540,8 @@ function initStudio(): void {
         $("inspWaitDelta").textContent = `${cell.baselineWaitSec}s → ${cell.proposedWaitSec}s (${wDiff <= 0 ? `▼${Math.abs(wDiff)}s` : `+${wDiff}s`})`;
         const usdNet = (cell.monthlyNetKrwM * 0.75).toFixed(1);
         $("inspFinancial").textContent = `${cell.aisleClearanceM}m · ${Number(usdNet) >= 0 ? "+" : ""}$${usdNet}k/mo`;
-        $("inspReasonBox").textContent = `Diagnosis: ${cell.failureReason} (Payback: Mo ${cell.breakEvenMonth})`;
-        $("loadCellTo3DBtn").textContent = `Load Store #${padRun} into 3D Floorplan Stage ↑`;
+        $("inspReasonBox").textContent = `Diagnosis: ${cell.failureReason} (Payback: ${cell.breakEvenMonth === null ? "not reached within 36 months" : "Mo " + cell.breakEvenMonth}) [assumed]`;
+        $("loadCellTo3DBtn").textContent = `Compare Preview #${padRun} in Captured 3D Layout ↑`;
         const jumpInput = document.getElementById("inspJumpInput") as HTMLInputElement | null;
         if (jumpInput && document.activeElement !== jumpInput) {
           jumpInput.value = String(cell.runIndex);
@@ -2087,26 +2085,17 @@ function initStudio(): void {
 
       tenKMatrix.setSimTime(state.t);
 
-      const wBase = Math.round(state.results.base.meanWaitSec ?? 0);
-      const wActive = Math.round(activeRes.meanWaitSec ?? 0);
-      const diff = wActive - wBase;
       const diffStr =
         state.threeMode === "baseline"
           ? "Baseline Bottleneck"
-          : diff < 0
-          ? `▼${Math.abs(diff)}s faster`
-          : `+${diff}s`;
+          : spatialWaitDelta(state.results.base, activeRes);
       $("threeLiveReadout").textContent = `${
         state.threeMode === "baseline" ? "[BEFORE]" : "[AFTER]"
-      } Wait ${wActive}s (${diffStr}) · 10m Served ${
-        activeRes.completed
-      } · Walk ${(activeRes.walkDistance ?? 0).toFixed(
-        1
-      )}m · Survived ${cat.survivedCount.toLocaleString("en-US")}/10K`;
+      } ${spatialMetricSummary(activeRes)} (${diffStr})`;
     }
   }
 
-  function recompute(): void {
+  function recompute(updateMatrix = true): void {
     window.clearTimeout(debounce);
     state.dirty = true;
     state.rev++;
@@ -2249,28 +2238,34 @@ function initStudio(): void {
       // Update Live 10,000-Store Parallel Wafer Matrix Engine
       const baseWaitVal = Math.max(25, Math.round(observed(a) ?? 96));
       const propWaitVal = Math.max(12, Math.round(observed(b) ?? 19));
-      tenKMatrix.updateConfig(
-        {
-          categoryKey: state.categoryId,
-          designKey: state.designId,
-          activeScenario: state.preset,
-          baseWaitSec: baseWaitVal,
-          propWaitSec: propWaitVal,
-          baseSurvivedTotal: Math.round(cat.survivedCount * 0.37),
-          propSurvivedTotal: cat.survivedCount,
-          scenarios: tenKClusters.map((c) => ({
-            id: c.id as Exclude<PresetKind, "custom">,
-            code: c.code,
-            label: c.label,
-            runs: c.total,
-            baseSurvived: Math.round(c.survived * 0.37),
-            propSurvived: c.survived,
+      if (updateMatrix) {
+        matrixSceneSnapshot = {
+          base: structuredClone(state.base), plan: structuredClone(state.plan),
+          seed: state.seed, pickupStaff: state.pickupStaff, body: state.body,
+        };
+        tenKMatrix.updateConfig(
+          {
+            categoryKey: state.categoryId,
+            designKey: state.designId,
+            activeScenario: state.preset,
             baseWaitSec: baseWaitVal,
             propWaitSec: propWaitVal,
-          })),
-        },
-        true
-      );
+            baseSurvivedTotal: Math.round(cat.survivedCount * 0.37),
+            propSurvivedTotal: cat.survivedCount,
+            scenarios: tenKClusters.map((c) => ({
+              id: c.id as Exclude<PresetKind, "custom">,
+              code: c.code,
+              label: c.label,
+              runs: c.total,
+              baseSurvived: Math.round(c.survived * 0.37),
+              propSurvived: c.survived,
+              baseWaitSec: baseWaitVal,
+              propWaitSec: propWaitVal,
+            })),
+          },
+          true
+        );
+      }
 
       const insightEl = $("insight");
       const d = (observed(b) ?? 0) - (observed(a) ?? 0);
@@ -2887,14 +2882,11 @@ function initStudio(): void {
       state.threeMode === "baseline"
         ? state.results?.base
         : state.results?.plan;
-    const waitSec = Math.round(activeRes?.meanWaitSec ?? 18);
-    const donePax = activeRes?.completed ?? 47;
-    const walkM = (activeRes?.walkDistance ?? 16.5).toFixed(1);
 
     const snap = threeStage.exportHighResSnapshot({
       title: `${dist.name} · ${cat.title} (${des.name})`,
       subtitle: `Address: ${dist.fullAddress} · Footprint: ${areaPy}py (${(areaPy * 3.3).toFixed(1)}m²) · Mode: ${state.threeMode.toUpperCase()}`,
-      metrics: `Mean Wait ${waitSec}s · 10m Served ${donePax} pax · Walk ${walkM}m · Survived ${cat.survivedCount.toLocaleString("en-US")}/10,000`,
+      metrics: spatialMetricSummary(activeRes),
     });
 
     const filename = `rehearsal-3d-${state.districtId}-${state.categoryId}-${state.designId}.png`;
@@ -2917,16 +2909,13 @@ function initStudio(): void {
       state.threeMode === "baseline"
         ? state.results?.base
         : state.results?.plan;
-    const waitSec = Math.round(activeRes?.meanWaitSec ?? 18);
-    const donePax = activeRes?.completed ?? 47;
-    const walkM = (activeRes?.walkDistance ?? 16.5).toFixed(1);
     const activeScene =
       state.threeMode === "baseline" ? state.base : state.plan;
 
     const sheet = threeStage.exportMultiViewBlueprintSheet({
       title: `${dist.name} · ${cat.title} (${des.name})`,
       subtitle: `Address: ${dist.fullAddress} · Footprint: ${areaPy}py (${(areaPy * 3.3).toFixed(1)}m²) · Mode: ${state.threeMode.toUpperCase()}`,
-      metrics: `Mean Wait ${waitSec}s · 10m Served ${donePax} pax · Walk ${walkM}m · Survived ${cat.survivedCount.toLocaleString("en-US")}/10,000`,
+      metrics: spatialMetricSummary(activeRes),
       fixtures: activeScene.objects.map((o) => ({
         id: o.id,
         label: o.label || o.koLabel || o.id,
@@ -3029,24 +3018,23 @@ function initStudio(): void {
     const areaPy = state.customAreaPyeong ?? unit.areaPyeong;
     const cells = tenKMatrix.getCells();
     const benches = findBenchmarkStoreCells(cells);
-    const baseWait = Math.round(state.results?.base.meanWaitSec ?? 105);
-    const propWait = Math.round(state.results?.plan.meanWaitSec ?? 18);
-    const engineStatus = $("backendEngineStatus")?.textContent || "Synced";
+    const engineStatus = $("backendEngineStatus")?.textContent || "Not verified";
 
     const mdLines = [
-      `# REA · A Thousand Stores — 10,000-Scenario Spatial & Financial Audit Report`,
+      `# REA · A Thousand Stores — Spatial Preview & Separate Financial Engine Report`,
       ``,
       `- **Generated UTC**: ${new Date().toISOString()}`,
       `- **Commercial District**: ${dist.name} (${dist.fullAddress})`,
       `- **Store Category & Concept**: ${cat.title} — ${des.name} (${areaPy}py / ${(areaPy * 3.3).toFixed(1)}m²)`,
       `- **36-Month Engine Verification**: ${engineStatus}`,
+      `- **Scope**: Spatial wafer economics and representative trajectory packets are [assumed], not 10,000 independently verified 3D runs. Financial engine results do not certify these layouts.`,
       ``,
       `## 1. Spatial Flow & Queue Bottleneck Summary`,
-      `- **Baseline Layout (Entry Choke)**: Mean Wait \`${baseWait}s\` · 10-Min Served \`${state.results?.base.completed ?? 18} pax\` · Walk \`${(state.results?.base.walkDistance ?? 17.8).toFixed(1)}m\``,
-      `- **Proposed Layout (Optimized)**: Mean Wait \`${propWait}s\` (▼${Math.max(0, baseWait - propWait)}s faster) · 10-Min Served \`${state.results?.plan.completed ?? 47} pax\` · Walk \`${(state.results?.plan.walkDistance ?? 16.5).toFixed(1)}m\``,
-      `- **10,000-Store Parallel Survival**: \`${cat.survivedCount.toLocaleString("en-US")} / 10,000\` Scenarios Survived (${(cat.survivedCount / 100).toFixed(1)}%)`,
+      `- **Baseline Layout**: ${spatialMetricSummary(state.results?.base)}`,
+      `- **Proposed Layout**: ${spatialMetricSummary(state.results?.plan)} (${spatialWaitDelta(state.results?.base, state.results?.plan)})`,
+      `- **Wafer Preview [assumed]**: ${cells.filter((cell) => cell.proposedSurvived).length.toLocaleString("en-US")} / ${cells.length.toLocaleString("en-US")} cells pass the illustrative model`,
       ``,
-      `## 2. Benchmark Store Runs from 100×100 Wafer Matrix`,
+      `## 2. Assumed Benchmark Cells from 100×100 Wafer Matrix`,
       `- **#1 Optimal Store Run**: Run \`#${String(benches.optimal.runIndex).padStart(5, "0")}\` (Family #${benches.optimal.familyId}, Variant #${benches.optimal.variantId}) — Wait \`${benches.optimal.proposedWaitSec}s\`, Clearance \`${benches.optimal.aisleClearanceM}m\`, Payback \`Mo ${benches.optimal.breakEvenMonth}\``,
       `- **Top Rescued Store Run**: Run \`#${String(benches.rescued.runIndex).padStart(5, "0")}\` (Family #${benches.rescued.familyId}, Variant #${benches.rescued.variantId}) — Wait Reduced \`${benches.rescued.baselineWaitSec}s → ${benches.rescued.proposedWaitSec}s\`, Diagnosis: ${benches.rescued.failureReason}`,
       `- **Worst Bottleneck Run**: Run \`#${String(benches.worst.runIndex).padStart(5, "0")}\` (Family #${benches.worst.familyId}, Variant #${benches.worst.variantId}) — Wait \`${benches.worst.proposedWaitSec}s\`, Clearance \`${benches.worst.aisleClearanceM}m\`, Failure: ${benches.worst.failureReason}`,

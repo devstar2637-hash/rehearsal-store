@@ -6,7 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const client = resolve(root, "web/client");
 const engines = [
   "canvasRenderer.ts", "d3StatsCharts.ts", "rehearsalCore.ts",
-  "threeFloorplanStage.ts", "tenKMatrixEngine.ts", "backendSync.ts",
+  "threeFloorplanStage.ts", "tenKMatrixEngine.ts", "backendSync.ts", "spatialTelemetry.ts",
 ];
 // The AI Studio entrypoint is canonical; Cloud Run assets are generated from it.
 for (const name of ["main.ts", ...engines.map((file) => "engine/" + file)]) {

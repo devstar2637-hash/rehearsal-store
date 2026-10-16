@@ -10,6 +10,7 @@ import {
   type SceneObject,
   type SimResult,
 } from "./rehearsalCore.ts";
+import { entranceFixtureGap, spatialWaitLabel } from "./spatialTelemetry.ts";
 
 export interface ThreeStageConfig {
   container: HTMLElement;
@@ -1107,7 +1108,7 @@ export class ThreeFloorplanStage {
       515
     );
 
-    // Live CAD Corridor Clearance Dimension Vector between Entrance & Display Fixture
+    // Entrance-to-fixture gap is geometry, not the minimum navigable corridor width.
     const dispObj =
       payload.scene.objects.find((o) => o.id === "display") ||
       payload.scene.objects[0];
@@ -1121,9 +1122,7 @@ export class ThreeFloorplanStage {
     if (dispObj) {
       const dispCenterX = dispObj.x + dispObj.w * 0.5;
       const dispBottomY = dispObj.y + dispObj.h;
-      const dx = Math.max(0, Math.abs(dispCenterX - ent.x) - dispObj.w * 0.5);
-      const dy = Math.max(0, ent.y - dispBottomY);
-      const clearanceM = Math.max(0.35, Math.hypot(dx, dy));
+      const clearanceM = entranceFixtureGap(payload.scene, dispObj);
       const dPx = (dispCenterX / 12) * w;
       const dPy = (dispBottomY / 9) * h;
 
@@ -1140,8 +1139,8 @@ export class ThreeFloorplanStage {
       const midX = (entPx + dPx) * 0.5;
       const midY = (entPy - 18 + dPy + 10) * 0.5;
       const badgeText = payload.result.routeBlocked
-        ? `CHOKE: ${clearanceM.toFixed(2)}m < ${payload.bodyWidth.toFixed(2)}m`
-        : `CLEARANCE: ${clearanceM.toFixed(2)}m [PASS]`;
+        ? `ROUTE BLOCKED · ENTRANCE GAP ${clearanceM.toFixed(2)}m`
+        : `ENTRANCE-DISPLAY GAP ${clearanceM.toFixed(2)}m [geometric]`;
       ctx.font = "700 15px 'JetBrains Mono', monospace";
       const tw = ctx.measureText(badgeText).width + 18;
       ctx.fillStyle = payload.result.routeBlocked
@@ -1350,7 +1349,7 @@ export class ThreeFloorplanStage {
     this.orderCounterGroup.userData = {
       partKey: "order-pos",
       title: `ORDER & POS COUNTER · STAFF ${payload.orderStaff}`,
-      subtitle: `Mean Wait ${Math.round(payload.result.meanWaitSec ?? 0)}s · P90 Wait ${Math.round(payload.result.p90WaitSec ?? 0)}s`,
+      subtitle: `Wait ${spatialWaitLabel(payload.result)} · P90 ${payload.result.p90WaitSec === null ? "N/A" : Math.round(payload.result.p90WaitSec) + "s"}`,
       body: `Primary point-of-sale counter where guests place orders. When arrival rate (${payload.arrivalRatePerMin.toFixed(1)}/min) exceeds service throughput, the 16-slot LED buffer illuminates in Signal Orange.`,
     };
 
@@ -1410,7 +1409,7 @@ export class ThreeFloorplanStage {
         `staff ${payload.orderStaff}/2`,
         Math.min(24, frame.orderQueue * 3 + 4),
         24,
-        `queue ${frame.orderQueue}  ·  wait ${Math.round(payload.result.meanWaitSec ?? 0)}s`,
+        `queue ${frame.orderQueue}  ·  wait ${spatialWaitLabel(payload.result)}`,
         frame.orderQueue >= 3
       );
       this.orderFrontTex.needsUpdate = true;
@@ -1783,7 +1782,7 @@ export class ThreeFloorplanStage {
     ctx.textAlign = "right";
     ctx.fillStyle = "#ea580c";
     ctx.font = '700 15px "JetBrains Mono", monospace';
-    ctx.fillText("10,000 PARALLEL MONTE CARLO SCENARIOS VERIFIED", snapW - 32, snapH + 40);
+    ctx.fillText("SPATIAL MODEL · WAFER / SWARM PREVIEW [ASSUMED]", snapW - 32, snapH + 40);
 
     ctx.fillStyle = "#f4f4f5";
     ctx.font = '700 16px "JetBrains Mono", monospace';
@@ -1905,7 +1904,7 @@ export class ThreeFloorplanStage {
     ctx.fillStyle = "#71717a";
     ctx.font = '500 12px "JetBrains Mono", monospace';
     ctx.fillText(
-      `VERIFIED BY 10,000-STORE PARALLEL ENGINE · EXPORTED ${new Date().toISOString().slice(0, 19).replace("T", " ")} UTC`,
+      `SPATIAL PREVIEW [ASSUMED] · FINANCIAL ENGINE VERIFIED SEPARATELY · EXPORTED ${new Date().toISOString().slice(0, 19).replace("T", " ")} UTC`,
       32,
       blockY + 162
     );

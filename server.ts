@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DEFAULT_ENGINE_BASE_URL =
-  "https://thousand-stores-299086406033.asia-northeast3.run.app";
+  "https://thousand-stores-personal.vercel.app";
 const ENGINE_TIMEOUT_MS = 20_000;
 
 export interface EngineProxyOptions {

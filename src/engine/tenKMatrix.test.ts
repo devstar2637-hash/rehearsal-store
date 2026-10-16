@@ -5,6 +5,8 @@ import {
   computeCell36MonthTrajectory,
   exportTenKCellsCsv,
   findBenchmarkStoreCells,
+  findTop100StoreCells,
+  renderCellCashflowSparkline,
   type TenKMatrixConfig,
 } from "./tenKMatrixEngine.ts";
 
@@ -123,4 +125,110 @@ test("exportTenKCellsCsv serializes all 10,000 store runs with header", () => {
   const lines = csv.split("\n");
   assert.equal(lines.length, 10001);
   assert.ok(lines[0].startsWith("run_index,ai_family_id,variant_id"));
+});
+
+test("every generated cell derives payback and month-36 totals from its cashflow trajectory", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  for (const cell of cells) {
+    const trajectory = computeCell36MonthTrajectory(cell);
+    const firstRecoveredIndex = trajectory.proposedCumUsdK.findIndex((value) => value >= 0);
+    const payback = firstRecoveredIndex < 0 ? null : firstRecoveredIndex + 1;
+    assert.equal(trajectory.breakEvenMonth, payback);
+    assert.equal(cell.breakEvenMonth, payback);
+    assert.equal(cell.month36BaselineUsdK, trajectory.baselineCumUsdK[35]);
+    assert.equal(cell.month36ProposedUsdK, trajectory.proposedCumUsdK[35]);
+    assert.equal(cell.month36DeltaUsdK, trajectory.month36DeltaUsdK);
+    if (!cell.proposedSurvived) assert.equal(cell.breakEvenMonth, null);
+  }
+});
+
+test("unrecovered cashflow never falls back to a stored payback month", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const cell = { ...cells[0], monthlyNetKrwM: 0.1, breakEvenMonth: 8 };
+  const trajectory = computeCell36MonthTrajectory(cell);
+  assert.equal(cell.proposedSurvived, true);
+  assert.equal(trajectory.breakEvenMonth, null);
+  assert.ok(trajectory.proposedCumUsdK.every((value) => value < 0));
+});
+
+test("CSV and inspector sparkline share cashflow payback and month-36 values", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const benches = findBenchmarkStoreCells(cells);
+  const selected = [
+    benches.optimal,
+    benches.worst,
+    { ...benches.optimal, monthlyNetKrwM: 0.1, breakEvenMonth: 8 },
+  ];
+  const [headerLine, ...rows] = exportTenKCellsCsv(selected).split("\n");
+  const headers = headerLine.split(",");
+  selected.forEach((cell, index) => {
+    const trajectory = renderCellCashflowSparkline(null, cell);
+    const values = rows[index].split(",");
+    const valueFor = (name: string) => values[headers.indexOf(name)];
+    assert.equal(valueFor("break_even_month"), String(trajectory.breakEvenMonth ?? ""));
+    assert.equal(Number(valueFor("month36_baseline_usd_k")), trajectory.month36BaselineUsdK);
+    assert.equal(Number(valueFor("month36_proposed_usd_k")), trajectory.month36ProposedUsdK);
+    assert.equal(Number(valueFor("month36_delta_usd_k")), trajectory.month36DeltaUsdK);
+    assert.equal(valueFor("diagnosis"), `"${cell.failureReason}"`);
+  });
+});
+
+test("Top 1% selects exactly 100 deterministic ranked runs without changing input order", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const originalOrder = cells.map((cell) => cell.runIndex);
+  const top = findTop100StoreCells(cells);
+  assert.equal(top.length, 100);
+  assert.equal(new Set(top.map((cell) => cell.runIndex)).size, 100);
+  assert.equal(top[0], findBenchmarkStoreCells(cells).optimal);
+  assert.ok(top.every((cell) => cell.proposedSurvived && !cell.marginalRisk));
+  assert.deepEqual(
+    findTop100StoreCells([...cells].reverse()).map((cell) => cell.runIndex),
+    top.map((cell) => cell.runIndex)
+  );
+  assert.deepEqual(cells.map((cell) => cell.runIndex), originalOrder);
+});
+
+test("Top 100 ranks survival, risk, profit, wait, clearance, then run index for ties", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const reference = {
+    ...cells[0],
+    proposedSurvived: true,
+    marginalRisk: false,
+    monthlyNetKrwM: 0,
+    proposedWaitSec: 10,
+    aisleClearanceM: 1,
+  };
+  const ranked = findTop100StoreCells([
+    { ...reference, runIndex: 70, proposedSurvived: false, monthlyNetKrwM: 1000 },
+    { ...reference, runIndex: 60, marginalRisk: true, monthlyNetKrwM: 100 },
+    { ...reference, runIndex: 9 },
+    { ...reference, runIndex: 50, aisleClearanceM: 1.1 },
+    { ...reference, runIndex: 2 },
+    { ...reference, runIndex: 40, proposedWaitSec: 8 },
+    { ...reference, runIndex: 30, monthlyNetKrwM: 1 },
+  ]);
+  assert.deepEqual(ranked.map((cell) => cell.runIndex), [30, 40, 50, 2, 9, 60, 70]);
+  assert.deepEqual(findTop100StoreCells([]), []);
+});
+
+test("Top 100 retains its cardinality when fewer than 100 runs survive", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const limitedSurvivors = cells.map((cell, index) => ({
+    ...cell,
+    proposedSurvived: index < 3,
+    marginalRisk: false,
+  }));
+  const top = findTop100StoreCells(limitedSurvivors);
+  assert.equal(top.length, 100);
+  assert.equal(top.filter((cell) => cell.proposedSurvived).length, 3);
+  assert.ok(top.slice(0, 3).every((cell) => cell.proposedSurvived));
+});
+
+test("CSV labels every illustrative store run with source_tag=assumed", () => {
+  const { cells } = buildTenKCells(sampleConfig);
+  const [header, ...rows] = exportTenKCellsCsv(cells).split("\n");
+  const sourceTagColumn = header.split(",").indexOf("source_tag");
+  assert.ok(sourceTagColumn >= 0);
+  assert.equal(rows.length, 10000);
+  assert.ok(rows.every((row) => row.split(",")[sourceTagColumn] === "assumed"));
 });
