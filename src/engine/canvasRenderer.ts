@@ -517,8 +517,8 @@ export function drawWorldCanvas(opts: DrawWorldOptions): IsoView {
     | { sort: number; person: (typeof f.people)[number]; object?: undefined };
 
   const items: RenderItem[] = scene.objects
-    .map((o) => ({ sort: o.x + o.y + o.w / 2 + o.h / 2, object: o }))
-    .concat(f.people.map((person) => ({ sort: person.x + person.y, person })))
+    .map<RenderItem>((o) => ({ sort: o.x + o.y + o.w / 2 + o.h / 2, object: o }))
+    .concat(f.people.map<RenderItem>((person) => ({ sort: person.x + person.y, person })))
     .sort((a, b) => a.sort - b.sort);
 
   for (const item of items) {

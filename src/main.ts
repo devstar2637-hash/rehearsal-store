@@ -349,7 +349,7 @@ function mountShell(): void {
         <!-- RIGHT ACTIONS & SCENARIO SURVIVAL COUNTER -->
         <div class="hc-right-group">
           <div class="hc-survival-badge tabular" id="heroScenarioTotal">
-            1,000개 중 842개 생존
+            고정 예시 · 미검증 842/1,000
           </div>
           <button type="button" class="hc-btn" id="openDrawerBtn">
             📷 도면 업로드 · 세부설정
@@ -375,7 +375,7 @@ function mountShell(): void {
           </div>
         </div>
 
-        <div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="1,000개 시나리오 프리셋"></div>
+        <div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="고정 예시 · 미검증 시나리오 프리셋"></div>
       </div>
 
       <!-- MAIN SPATIAL 3D FLOORPLAN STAGE -->
@@ -521,7 +521,7 @@ function mountShell(): void {
 
           <div class="hc-insight-pill" id="insight" aria-live="polite">
             <strong>대기 87초 단축 · +20명 더 판매</strong>
-            <span class="muted">1,000개 시나리오 검증 완료</span>
+            <span class="muted">고정 예시 · 미검증</span>
           </div>
           <span class="hidden" id="calcBadge" role="status"></span>
         </div>
@@ -737,7 +737,7 @@ function buildCrewPlanText(): string {
     `[Rehearsal 창업 도면 & 시뮬레이션 리포트]`,
     `• 주소: ${state.address} | 자본금: ${formatShortWon(state.budgetManWon)}`,
     `• 업종: ${cat.title} (초기 ${formatShortWon(cat.setupCostManWon)}) | 디자인: ${des.name}`,
-    `• 시나리오: ${cat.scenarioTotal}개 중 ${cat.survivedCount}개 생존`,
+    `• 시나리오 (고정 예시 · 미검증): ${cat.scenarioTotal}개 중 ${cat.survivedCount}개 생존`,
     `• 선택 가구(${o.koLabel || o.label}): X=${o.x.toFixed(1)}m, Y=${o.y.toFixed(1)}m`,
     `• 평균 대기: ${round(observed(b), 1)}초 → ${round(observed(r), 1)}초`,
     `• 10분 완료: ${b.completed}명 → ${r.completed}명`,
@@ -836,7 +836,7 @@ function initStudio(): void {
         active ? "active" : ""
       }" data-scn-id="${s.id}">
           <span>${s.title}</span>
-          <small class="tabular">${s.countLabel}</small>
+          <small class="tabular">${s.countLabel} · 고정 예시 · 미검증</small>
         </button>
       `;
     }).join("");
@@ -853,7 +853,7 @@ function initStudio(): void {
     const cat = getActiveCategory();
     const des = getActiveDesign();
     $("budgetDisplayLabel").textContent = formatShortWon(state.budgetManWon);
-    $("heroScenarioTotal").textContent = `1,000개 중 ${cat.survivedCount}개 생존`;
+    $("heroScenarioTotal").textContent = `고정 예시 · 미검증 ${cat.survivedCount}/1,000`;
 
     const reserve = state.budgetManWon - cat.setupCostManWon;
     $("budgetRemainBanner").textContent =

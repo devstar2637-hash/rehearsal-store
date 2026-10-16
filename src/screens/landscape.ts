@@ -477,7 +477,7 @@ export function renderLandscapeScreen(
       width,
       height,
       legend: { show: false },
-      Cursor: { show: true },
+      cursor: { show: true },
       scales: {
         x: {
           time: false,
