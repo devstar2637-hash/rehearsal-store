@@ -7,7 +7,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "start": "node server.ts",
-    "test": "tsx --test src/format.test.ts src/engine/rehearsalCore.test.ts infra/staticServer.test.mjs",
+    "test": "tsx --test src/format.test.ts src/engine/rehearsalCore.test.ts src/engine/scenarioExplorer.test.ts infra/staticServer.test.mjs",
     "start:cloud": "node infra/staticServer.mjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

@@ -15,6 +15,7 @@ import {
 } from "./engine/threeRenderer.ts";
 import { generateSampleBlueprintCanvas } from "./engine/canvasRenderer.ts";
 import { mountAsciiBackground } from "./ui/asciiBackground.ts";
+import { generateScenarios, runScenarioBatch, SCENARIO_COUNT, type ScenarioCandidate, type ScenarioBatchReceipt } from "./engine/scenarioExplorer.ts";
 
 declare global {
   interface Window {
@@ -23,6 +24,7 @@ declare global {
       getState: () => unknown;
       packet: () => unknown;
       manualBox: () => RoiBox | null;
+      scenarioExplorer: () => unknown;
     };
     __errors: string[];
   }
@@ -54,8 +56,6 @@ interface StartupCategory {
   mainDisplayLabel: string;
   orderDeskLabel: string;
   pickupDeskLabel: string;
-  scenarioTotal: number;
-  survivedCount: number;
 }
 
 const CATEGORIES: StartupCategory[] = [
@@ -71,8 +71,6 @@ const CATEGORIES: StartupCategory[] = [
     mainDisplayLabel: "원두·MD 진열대",
     orderDeskLabel: "주문 바",
     pickupDeskLabel: "픽업 바",
-    scenarioTotal: 1000,
-    survivedCount: 842,
   },
   {
     id: "bakery",
@@ -86,8 +84,6 @@ const CATEGORIES: StartupCategory[] = [
     mainDisplayLabel: "소금빵 쇼케이스",
     orderDeskLabel: "결제 카운터",
     pickupDeskLabel: "오븐·픽업 바",
-    scenarioTotal: 1000,
-    survivedCount: 815,
   },
   {
     id: "matcha",
@@ -101,8 +97,6 @@ const CATEGORIES: StartupCategory[] = [
     mainDisplayLabel: "말차 아일랜드 바",
     orderDeskLabel: "키오스크",
     pickupDeskLabel: "말차 픽업대",
-    scenarioTotal: 1000,
-    survivedCount: 890,
   },
   {
     id: "wine",
@@ -116,8 +110,6 @@ const CATEGORIES: StartupCategory[] = [
     mainDisplayLabel: "와인 큐레이션 랙",
     orderDeskLabel: "소믈리에 바",
     pickupDeskLabel: "패키징 바",
-    scenarioTotal: 1000,
-    survivedCount: 774,
   },
 ];
 
@@ -176,7 +168,6 @@ const DESIGN_CONCEPTS: DesignConcept[] = [
 interface ScenarioPreset {
   id: "layout" | "staff" | "both" | "rainy" | "influencer" | "stroller";
   title: string;
-  countLabel: string;
   arrival: number;
   service: number;
   body: number;
@@ -187,7 +178,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "both",
     title: "표준 운영",
-    countLabel: "320",
     arrival: 4.0,
     service: 20,
     body: 0.65,
@@ -196,7 +186,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "rainy",
     title: "비 오는 피크",
-    countLabel: "240",
     arrival: 6.5,
     service: 22,
     body: 0.65,
@@ -205,7 +194,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "layout",
     title: "1인 독박",
-    countLabel: "140",
     arrival: 4.0,
     service: 20,
     body: 0.65,
@@ -214,7 +202,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "influencer",
     title: "오픈 웨이팅",
-    countLabel: "120",
     arrival: 7.5,
     service: 18,
     body: 0.65,
@@ -223,7 +210,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "staff",
     title: "인력만 +1",
-    countLabel: "100",
     arrival: 4.0,
     service: 20,
     body: 0.65,
@@ -232,7 +218,6 @@ const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: "stroller",
     title: "유모차·단체",
-    countLabel: "80",
     arrival: 4.0,
     service: 20,
     body: 1.2,
@@ -336,6 +321,7 @@ function mountShell(): void {
 
         <!-- RIGHT ACTIONS & SCENARIO SURVIVAL COUNTER -->
         <div class="hc-right-group">
+          <button type="button" class="explore-header-btn" id="openExplorerHeaderBtn"><span class="explore-header-spark">✦</span><strong class="tabular">10,000</strong><span>개 조합 탐색 ↗</span></button>
           <button type="button" class="hc-btn" id="openDrawerBtn">
             <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5"/></svg>도면 · 세부 설정
           </button>
@@ -350,6 +336,13 @@ function mountShell(): void {
         <div class="compare">
           <aside class="scene-sidebar" aria-label="공간 프로젝트 및 기준 비교">
             <div class="scene-project-heading"><span class="scene-kicker">WORKSPACE / 01</span><h1>가게의 다음 하루를<br>먼저 살아보세요.</h1><p>공간을 바꾸고, 같은 하루를 비교하세요.</p></div>
+            <section class="exploration-summary" aria-label="합성 시나리오 조합 탐색">
+              <div class="exploration-kicker">SCENARIO EXPLORER <span>조건 공간</span></div>
+              <button type="button" id="openExplorerBtn" class="exploration-open"><strong class="tabular" id="scenarioCombinationCount">10,000</strong><span>개 조합 탐색 <b>↗</b></span></button>
+              <canvas id="scenarioMiniMap" width="200" height="52" aria-hidden="true"></canvas>
+              <div class="exploration-proof"><span id="scenarioEnumerationStatus">조합 구성 중</span><span id="scenarioDetailStatus">현재 상세 비교 2개</span></div>
+              <p>합성 조건 · 현실 예측 아님</p>
+            </section>
             <div class="sidebar-section"><div class="sidebar-section-label">매장 콘셉트</div><div class="hc-cat-tabs" id="categoryGrid" role="group" aria-label="추천 창업 카테고리"></div><div class="hc-budget-pill">
             <span class="hc-label">자본금</span>
             <strong class="tabular" id="budgetDisplayLabel">1.2억</strong>
@@ -405,7 +398,7 @@ function mountShell(): void {
           </section>
 
 
-            <div class="sidebar-section scenario-section"><div class="sidebar-section-label">운영 시나리오</div><div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="고정 예시 · 미검증 시나리오 프리셋"></div><p class="scenario-footnote">프리셋 표시 개수는 고정 예시 · 미검증입니다.</p><div class="hc-survival-badge tabular" id="heroScenarioTotal">고정 예시 · 미검증 842/1,000</div></div>
+            <div class="sidebar-section scenario-section"><div class="sidebar-section-label">운영 시나리오</div><div class="hc-scenario-strip" id="scenarioDeckGrid" role="group" aria-label="운영 조건 프리셋"></div><p class="scenario-footnote">프리셋은 선택한 조건으로 상세 비교를 실행합니다.</p><div class="hc-survival-badge" id="heroScenarioTotal">합성 조건 · 현실 예측 아님</div></div>
           </aside>
           <!-- PROPOSED INTERACTIVE 3D WORLD -->
           <section class="world proposed">
@@ -519,13 +512,23 @@ function mountShell(): void {
           </div>
 
           <div class="hc-insight-pill" id="insight" aria-live="polite">
-            <strong>대기 87초 단축 · +20명 더 판매</strong>
-            <span class="muted">고정 예시 · 미검증</span>
+            <strong>상세 비교 계산 중</strong>
+            <span class="muted">합성 조건 · 10분 비교</span>
           </div>
           <span class="hidden" id="calcBadge" role="status"></span>
         </div>
       </main>
 
+
+      <aside class="scenario-explorer hidden" id="scenarioExplorer" role="dialog" aria-modal="true" aria-label="10,000개 합성 조건 탐색">
+        <div class="scenario-explorer-card">
+          <header class="explorer-head"><div><span class="scene-kicker">EXPLORE THE POSSIBILITY SPACE</span><h2><strong class="tabular" id="explorerTotal">10,000</strong>개 조합 탐색</h2><p id="explorerSubtitle">서로 다른 유입·제조 시간·인력·통과 폭·Seed 조합을 선택하세요.</p></div><button type="button" class="hc-btn" id="closeExplorerBtn">닫기 ✕</button></header>
+          <div class="explorer-content">
+            <div class="explorer-map-panel"><div class="explorer-map-caption"><span>각 칸 = 실제 열거한 조건 1개</span><span>색은 유입 강도 · 성과 점수 아님</span></div><canvas id="scenarioMap" width="800" height="800" tabindex="0" role="img" aria-label="10,000개 합성 조건 격자. 클릭하거나 방향키로 조건 선택"></canvas><div class="explorer-map-axis"><span>저유입</span><span class="explorer-spectrum"></span><span>고유입</span></div></div>
+            <section class="explorer-inspector"><div class="sidebar-section-label">선택한 조건</div><strong class="tabular" id="selectedScenarioId">—</strong><div id="selectedScenarioDetails" class="explorer-parameters"></div><button type="button" class="hc-btn primary" id="applyScenarioBtn">이 조건으로 상세 비교 →</button><p class="explorer-disclosure">10,000개는 열거한 합성 조건 수입니다.<br>선택 후 기준·변경안 2개를 정밀 실행합니다.<br>합성 조건 · 현실 예측 아님.</p><div id="explorerApplyStatus" class="status" aria-live="polite"></div><div class="explorer-batch"><div class="sidebar-section-label">선택 업종 · 현재 배치의 1만개 상세 실행</div><button type="button" class="hc-btn" id="runScenarioBatchBtn" disabled>1만개 상세 실행</button><button type="button" class="hc-mini-btn hidden" id="cancelScenarioBatchBtn">중단</button><button type="button" class="hc-btn" id="downloadScenarioBatchBtn" disabled>상세 결과 JSON 저장</button><progress id="scenarioBatchProgress" max="10000" value="0"></progress><div id="scenarioBatchStatus" role="status">전체 상세 실행 전 · 사전 점검만 완료</div></div></section>
+          </div>
+        </div>
+      </aside>
       <!-- SLIDE-OVER DRAWER FOR PHOTO/BLUEPRINT UPLOAD & FINE SLIDERS -->
       <aside class="hc-drawer hidden" id="studioDrawer" aria-label="도면 업로드 및 세부 설정">
         <div class="hc-drawer-card">
@@ -736,7 +739,8 @@ function buildCrewPlanText(): string {
     `[Rehearsal 창업 도면 & 시뮬레이션 리포트]`,
     `• 주소: ${state.address} | 자본금: ${formatShortWon(state.budgetManWon)}`,
     `• 업종: ${cat.title} (초기 ${formatShortWon(cat.setupCostManWon)}) | 디자인: ${des.name}`,
-    `• 시나리오 (고정 예시 · 미검증): ${cat.scenarioTotal}개 중 ${cat.survivedCount}개 생존`,
+    `• 탐색 범위: 합성 조건 10,000개 조합 구성. 전체 정밀 시뮬레이션·생존 예측이 아님.`,
+    `• 현재 상세 실행: 기준/변경안 2개. Seed ${state.seed}, 10분 모의 운영.`,
     `• 선택 가구(${o.koLabel || o.label}): X=${o.x.toFixed(1)}m, Y=${o.y.toFixed(1)}m`,
     `• 평균 대기: ${round(observed(b), 1)}초 → ${round(observed(r), 1)}초`,
     `• 10분 완료: ${b.completed}명 → ${r.completed}명`,
@@ -762,6 +766,197 @@ function initStudio(): void {
   let drag: { id: string; dx: number; dy: number; height: number } | null = null;
   let imageDrag: Point2D | null = null;
   let blueprintSource: HTMLImageElement | HTMLCanvasElement | null = null;
+
+  let batchController: AbortController | null = null;
+  let batchReceipt: ScenarioBatchReceipt | null = null;
+  let batchJobToken = 0;
+  let batchState: "not_started" | "running" | "complete" | "cancelled" | "error" = "not_started";
+  let batchCompleted = 0;
+  let batchRevision: number | null = null;
+  function invalidateScenarioBatch(reason = "조건 또는 배치가 변경됐습니다. 다시 실행하세요."): void {
+    const hadBatch = batchState !== "not_started";
+    ++batchJobToken;
+    batchController?.abort();
+    batchController = null;
+    batchReceipt = null;
+    batchState = hadBatch ? "cancelled" : "not_started";
+    batchCompleted = 0;
+    batchRevision = null;
+    $<HTMLButtonElement>("downloadScenarioBatchBtn").disabled = true;
+    $<HTMLButtonElement>("runScenarioBatchBtn").disabled = false;
+    $("cancelScenarioBatchBtn").classList.add("hidden");
+    $<HTMLProgressElement>("scenarioBatchProgress").value = 0;
+    if (hadBatch) $("scenarioBatchStatus").textContent = reason;
+  }
+  $("cancelScenarioBatchBtn").addEventListener("click", () => invalidateScenarioBatch(`중단 · ${batchCompleted.toLocaleString("en-US")}개 상세 실행. 전체 완료 아님.`));
+  $("runScenarioBatchBtn").addEventListener("click", async () => {
+    if (batchController || state.dirty || !state.results) return;
+    const controller = new AbortController();
+    batchController = controller;
+    const jobToken = ++batchJobToken;
+    const sceneRevision = state.rev;
+    const category = state.categoryId;
+    batchRevision = sceneRevision;
+    batchReceipt = null;
+    batchCompleted = 0;
+    batchState = "running";
+    $<HTMLButtonElement>("downloadScenarioBatchBtn").disabled = true;
+    $<HTMLButtonElement>("runScenarioBatchBtn").disabled = true;
+    $("cancelScenarioBatchBtn").classList.remove("hidden");
+    $("scenarioBatchStatus").textContent = "0 / 10,000 · 현재 변경안 배치의 10분 상세 실행 시작";
+    try {
+      const receipt = await runScenarioBatch(JSON.parse(JSON.stringify(state.plan)), category, (progress) => {
+        if (jobToken !== batchJobToken || sceneRevision !== state.rev || category !== state.categoryId) return;
+        batchCompleted = progress.completed;
+        $<HTMLProgressElement>("scenarioBatchProgress").value = progress.completed;
+        $("scenarioBatchStatus").textContent = `${progress.completed.toLocaleString("en-US")} / 10,000 상세 실행 · ${(progress.elapsedMs / 1000).toFixed(1)}초`;
+      }, {signal: controller.signal, maxDurationMs: 120000});
+      if (jobToken !== batchJobToken || sceneRevision !== state.rev || category !== state.categoryId) return;
+      batchReceipt = receipt;
+      batchCompleted = receipt.completed;
+      batchState = "complete";
+      $<HTMLButtonElement>("downloadScenarioBatchBtn").disabled = false;
+      $<HTMLProgressElement>("scenarioBatchProgress").value = receipt.completed;
+      $("scenarioBatchStatus").textContent = `${receipt.completed.toLocaleString("en-US")}개 상세 실행 완료 · ${(receipt.elapsedMs / 1000).toFixed(1)}초 · 통로 막힘 ${receipt.summary.routeBlockedCount.toLocaleString("en-US")}개 · 인원 보존 오류 ${receipt.summary.conservationFailureCount}개. 생존·매출 예측 아님.`;
+    } catch (error) {
+      if (jobToken !== batchJobToken) return;
+      const message = error instanceof Error ? error.message : String(error);
+      batchState = controller.signal.aborted ? "cancelled" : "error";
+      $("scenarioBatchStatus").textContent = `전체 실행 미완료 · ${message}`;
+    } finally {
+      if (jobToken === batchJobToken) {
+        batchController = null;
+        $<HTMLButtonElement>("runScenarioBatchBtn").disabled = false;
+        $("cancelScenarioBatchBtn").classList.add("hidden");
+      }
+    }
+  });
+  $<HTMLButtonElement>("runScenarioBatchBtn").disabled = false;
+  $("downloadScenarioBatchBtn").addEventListener("click", () => {
+    if (!batchReceipt || batchState !== "complete" || batchRevision !== state.rev || state.dirty || batchReceipt.categoryId !== state.categoryId) return;
+    downloadFile("rehearsal-10000-detailed-results.json", JSON.stringify(batchReceipt, null, 2), "application/json");
+  });
+  const scenarioCache = new Map<StartupCategory["id"], ReturnType<typeof generateScenarios>>();
+  let explorerCategory: StartupCategory["id"] | null = null;
+  let selectedScenarioIndex = 0;
+  let explorerPreviousFocus: HTMLElement | null = null;
+  function explorerData() {
+    let data = scenarioCache.get(state.categoryId);
+    if (!data) {
+      data = generateScenarios(state.categoryId);
+      scenarioCache.set(state.categoryId, data);
+    }
+    return data;
+  }
+  function selectedScenario(): ScenarioCandidate {
+    return explorerData().candidates[selectedScenarioIndex];
+  }
+  function paintScenarioMap(canvas: HTMLCanvasElement, selection: boolean): void {
+    const data = explorerData();
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const values = data.metadata.axes.arrivalsPerMin;
+    const min = Math.min(...values), max = Math.max(...values);
+    const cw = canvas.width / 100, ch = canvas.height / 100;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const candidate of data.candidates) {
+      const intensity = (candidate.arrivalPerMin - min) / Math.max(0.1, max - min);
+      ctx.fillStyle = `hsl(${172 - intensity * 20} 42% ${18 + intensity * 37}%)`;
+      ctx.fillRect((candidate.index % 100) * cw, Math.floor(candidate.index / 100) * ch, selection ? Math.max(1, cw - 0.8) : Math.ceil(cw), selection ? Math.max(1, ch - 0.8) : Math.ceil(ch));
+    }
+    if (selection) {
+      ctx.strokeStyle = "#effbf4";
+      ctx.lineWidth = 3;
+      ctx.strokeRect((selectedScenarioIndex % 100) * cw, Math.floor(selectedScenarioIndex / 100) * ch, cw, ch);
+    }
+  }
+  function renderScenarioSelection(): void {
+    const candidate = selectedScenario();
+    $("selectedScenarioId").textContent = candidate.id;
+    $("selectedScenarioDetails").innerHTML = [
+      ["유입", `${candidate.arrivalPerMin.toFixed(1)}명 / 분`],
+      ["제조 시간", `${candidate.serviceSec}초`],
+      ["주문 · 픽업 인력", `${candidate.orderStaff}명 · ${candidate.pickupStaff}명`],
+      ["통과 폭", `${candidate.bodyWidthM.toFixed(2)}m`],
+      ["Seed", String(candidate.seed)],
+      ["분석적 부하율", `${candidate.bottleneckUtilization.toFixed(2)} · 성과 예측 아님`],
+    ].map(([label, value]) => `<div><span>${label}</span><strong class="tabular">${value}</strong></div>`).join("");
+    paintScenarioMap($<HTMLCanvasElement>("scenarioMap"), true);
+  }
+  function syncScenarioExplorer(): void {
+    if (explorerCategory === state.categoryId) return;
+    explorerCategory = state.categoryId;
+    selectedScenarioIndex = 0;
+    const data = explorerData();
+    $("scenarioCombinationCount").textContent = data.candidates.length.toLocaleString("en-US");
+    $("explorerTotal").textContent = data.candidates.length.toLocaleString("en-US");
+    $("scenarioEnumerationStatus").textContent = "조합 열거 · 부하 사전 점검 완료";
+    $("explorerSubtitle").textContent = `${getActiveCategory().title} · 유입 10 × 제조 시간 10 × 주문 인력 5 × 픽업 인력 5 × 통과 폭 4`;
+    paintScenarioMap($<HTMLCanvasElement>("scenarioMiniMap"), false);
+    renderScenarioSelection();
+  }
+  function closeScenarioExplorer(): void {
+    $("scenarioExplorer").classList.add("hidden");
+    explorerPreviousFocus?.focus();
+  }
+  function openScenarioExplorer(): void {
+    explorerPreviousFocus = document.activeElement as HTMLElement;
+    syncScenarioExplorer();
+    $("scenarioExplorer").classList.remove("hidden");
+    $("closeExplorerBtn").focus();
+    renderScenarioSelection();
+  }
+  $("openExplorerBtn").addEventListener("click", openScenarioExplorer);
+  $("openExplorerHeaderBtn").addEventListener("click", openScenarioExplorer);
+  $("closeExplorerBtn").addEventListener("click", closeScenarioExplorer);
+  $("scenarioExplorer").addEventListener("click", (event) => {
+    if (event.target === $("scenarioExplorer")) closeScenarioExplorer();
+  });
+  $("scenarioExplorer").addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeScenarioExplorer();
+    if (event.key !== "Tab") return;
+    const buttons = Array.from($("scenarioExplorer").querySelectorAll<HTMLElement>("button:not([disabled]),[tabindex='0']"));
+    const first = buttons[0], last = buttons[buttons.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  });
+  $("scenarioMap").addEventListener("click", (event) => {
+    const rect = $("scenarioMap").getBoundingClientRect();
+    const x = Math.max(0, Math.min(99, Math.floor((event.clientX - rect.left) / rect.width * 100)));
+    const y = Math.max(0, Math.min(99, Math.floor((event.clientY - rect.top) / rect.height * 100)));
+    selectedScenarioIndex = y * 100 + x;
+    renderScenarioSelection();
+  });
+  $("scenarioMap").addEventListener("keydown", (event) => {
+    const delta: Record<string, number> = {ArrowLeft: -1, ArrowRight: 1, ArrowUp: -100, ArrowDown: 100};
+    if (!(event.key in delta)) return;
+    event.preventDefault();
+    selectedScenarioIndex = Math.max(0, Math.min(SCENARIO_COUNT - 1, selectedScenarioIndex + delta[event.key]));
+    renderScenarioSelection();
+  });
+  $("applyScenarioBtn").addEventListener("click", () => {
+    const candidate = selectedScenario();
+    state.arrival = candidate.arrivalPerMin;
+    state.service = candidate.serviceSec;
+    state.orderStaff = candidate.orderStaff;
+    state.pickupStaff = candidate.pickupStaff;
+    state.body = candidate.bodyWidthM;
+    state.seed = candidate.seed;
+    state.preset = "custom";
+    for (const [id, value] of [["arrivals", state.arrival], ["service", state.service], ["pickupStaff", state.pickupStaff]] as const) {
+      const input = $<HTMLInputElement>(id);
+      input.max = String(Math.max(Number(input.max), value));
+      input.min = String(Math.min(Number(input.min), value));
+      input.value = String(value);
+    }
+    const body = $<HTMLSelectElement>("bodyWidth");
+    const width = state.body.toFixed(2);
+    if (!Array.from(body.options).some((option) => option.value === width)) body.add(new Option(`탐색 조건 · ${width}m`, width));
+    body.value = width;
+    recompute();
+    $("explorerApplyStatus").textContent = state.results && !state.dirty ? `${candidate.id} · 기준/변경안 2개 상세 비교 완료` : `${candidate.id} · 상세 비교 결과 없음`;
+    closeScenarioExplorer();
+  });
 
   function renderCategoryCards(): void {
     const grid = $("categoryGrid");
@@ -835,9 +1030,9 @@ function initStudio(): void {
       return `
         <button type="button" id="${btnId}" class="hc-scn-chip ${
         active ? "active" : ""
-      }" data-scn-id="${s.id}" aria-label="${s.title}, 고정 예시 ${s.countLabel}, 미검증">
+      }" data-scn-id="${s.id}" aria-label="${s.title}, 유입 ${s.arrival}명/분, 제조 ${s.service}초">
           <span>${s.title}</span>
-          <small class="tabular">${s.countLabel}</small>
+          <small class="tabular">${s.arrival}/m</small>
         </button>
       `;
     }).join("");
@@ -856,8 +1051,10 @@ function initStudio(): void {
     for (const id of ["jsonBtn", "exportBtn", "previewPlanBtn"]) {
       $<HTMLButtonElement>(id).disabled = state.dirty || !state.results;
     }
+    syncScenarioExplorer();
     $("budgetDisplayLabel").textContent = formatShortWon(state.budgetManWon);
-    $("heroScenarioTotal").textContent = `고정 예시 · 미검증 ${cat.survivedCount}/1,000`;
+    $("heroScenarioTotal").textContent = "합성 조건 · 현실 예측 아님";
+    $("scenarioDetailStatus").textContent = state.dirty ? "상세 비교 계산 중" : state.results ? "현재 상세 비교 2개" : "상세 비교 결과 없음";
 
     const reserve = state.budgetManWon - cat.setupCostManWon;
     $("budgetRemainBanner").textContent =
@@ -901,6 +1098,22 @@ function initStudio(): void {
     $("toggleAcBtn").classList.toggle("active", state.acOn);
     $("toggleAcBtn").textContent = state.acOn ? "❄️ 에어컨 기류 ON" : "❄️ 에어컨 OFF";
 
+    const baseResult = state.results?.base;
+    const planResult = state.results?.plan;
+    let pairInsight = "상세 비교 결과 없음";
+    if (state.dirty) pairInsight = "상세 비교 계산 중";
+    else if (baseResult && planResult) {
+      if (planResult.routeBlocked) pairInsight = "변경안 통로 막힘 · 가구를 옮겨주세요";
+      else if (baseResult.routeBlocked) pairInsight = "기준 통로 막힘 · 대기 비교 불가";
+      else {
+        const baseWait = observed(baseResult), planWait = observed(planResult);
+        const waitDelta = baseWait !== null && planWait !== null ? baseWait - planWait : null;
+        const waitLabel = waitDelta === null ? "평균 대기 관측 없음" : Math.abs(waitDelta) < 0.05 ? "대기 동일" : `대기 ${round(Math.abs(waitDelta), 1)}초 ${waitDelta > 0 ? "단축" : "증가"}`;
+        const completionDelta = planResult.completed - baseResult.completed;
+        pairInsight = `${waitLabel} · 완료 ${completionDelta > 0 ? "+" : ""}${completionDelta}명`;
+      }
+    }
+    $("insight").innerHTML = `<strong>${pairInsight}</strong><span class="muted">합성 조건 · 10분 비교</span>`;
     $("playBtn").textContent = state.playing ? "일시정지" : "재생";
     $("walkBtn").textContent = state.walkMode ? "🚶 보행 종료" : "🚶 직접 걸어보기";
     $("walkBtn").classList.toggle("active", state.walkMode);
@@ -922,6 +1135,7 @@ function initStudio(): void {
       scene: state.base,
       result: state.results?.base,
       worldIndex: 0,
+      categoryKey: state.categoryId,
       currentTimeSec: state.t,
       walkMode: state.walkMode,
       playerPos: state.players[0],
@@ -938,6 +1152,7 @@ function initStudio(): void {
       scene: state.plan,
       result: state.results?.plan,
       worldIndex: 1,
+      categoryKey: state.categoryId,
       currentTimeSec: state.t,
       walkMode: state.walkMode,
       playerPos: state.players[1],
@@ -954,6 +1169,7 @@ function initStudio(): void {
   }
 
   function recompute(): void {
+    invalidateScenarioBatch();
     window.clearTimeout(debounce);
     state.dirty = true;
     syncControls();
@@ -1017,15 +1233,6 @@ function initStudio(): void {
         1
       )}m, ${selObj.y.toFixed(1)}m) · 마우스 드래그 이동`;
 
-      const insightEl = $("insight");
-      const d = (observed(b) ?? 0) - (observed(a) ?? 0);
-      const summaryTitle = b.routeBlocked
-        ? "통로가 막혔습니다 — 가구를 옮겨주세요"
-        : d < -2
-        ? `대기 ${round(-d)}초 단축 · +${b.completed - a.completed}명 추가 판매`
-        : "실시간 동선 시뮬레이션 정상 가동 중";
-      insightEl.innerHTML = `<strong>${summaryTitle}</strong>`;
-
       $("calcBadge").textContent = `Seed #${state.seed}`;
       $("calcBadge").dataset.revision = String(state.rev);
       $("calPredWait").textContent = b.routeBlocked
@@ -1046,6 +1253,7 @@ function initStudio(): void {
   }
 
   function queueRecompute(): void {
+    invalidateScenarioBatch();
     state.dirty = true;
     syncControls();
     window.clearTimeout(debounce);
@@ -1418,7 +1626,8 @@ function initStudio(): void {
   function packet() {
     return {
       product: "Rehearsal spatial studio",
-      version: 2,
+      version: 3,
+      exploration: {categoryId: state.categoryId, generatedCount: explorerData().candidates.length, metadata: explorerData().metadata, selectedId: selectedScenario().id, currentDetailedPairCount: state.dirty || !state.results ? 0 : 2, batch: {status: batchState, completedCount: batchCompleted, sceneRevision: batchRevision, mode: "detailed_core_batch", receipt: batchReceipt}},
       address: state.address,
       budgetManWon: state.budgetManWon,
       category: state.categoryId,
@@ -1685,6 +1894,7 @@ function initStudio(): void {
     }),
     packet,
     manualBox: () => state.roi,
+    scenarioExplorer: () => ({categoryId: state.categoryId, generatedCount: explorerData().candidates.length, uniqueIdCount: new Set(explorerData().candidates.map((candidate) => candidate.id)).size, metadata: explorerData().metadata, candidates: explorerData().candidates, selectedId: selectedScenario().id, currentDetailedPairCount: state.dirty || !state.results ? 0 : 2, batch: {status: batchState, completedCount: batchCompleted, sceneRevision: batchRevision, currentSceneRevision: state.rev, mode: "detailed_core_batch", receipt: batchReceipt}}),
   };
 
   blueprintSource = generateSampleBlueprintCanvas();

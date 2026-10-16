@@ -234,3 +234,78 @@ button:focus-visible, input:focus-visible, select:focus-visible, canvas:focus-vi
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Actual enumerated condition space; detailed simulation counts are reported separately. */
+.explore-header-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; margin-right: 8px; border: 1px solid #a8dfc84a; border-radius: 8px; color: #a9d7c4; background: #a1e7c70b; font-size: 9px; white-space: nowrap; }
+.explore-header-btn strong { font-size: 17px; letter-spacing: -.06em; font-weight: 500; }
+.explore-header-spark { color: #bee6d7; font-size: 15px; }
+.exploration-summary { margin: 0 0 22px; padding: 13px 12px 11px; border: 1px solid #a8dfc840; border-radius: 12px; background: linear-gradient(130deg, #a9e6ca13, #101922); }
+.exploration-kicker { display: flex; align-items: center; justify-content: space-between; gap: 5px; color: #a4d7c3; font-size: 7px; letter-spacing: .12em; }
+.exploration-kicker span { color: #6e9283; font-size: 8px; letter-spacing: 0; }
+.exploration-open { display: flex; align-items: baseline; gap: 9px; width: 100%; padding: 6px 0 8px; border: 0; color: #d6f6e7; background: none; text-align: left; }
+.exploration-open > strong { font-weight: 400; font-size: 36px; letter-spacing: -.07em; line-height: 1.4; }
+.exploration-open > span { flex: 1; font-size: 10px; color: #98baa9; }
+.exploration-open b { display: block; font-size: 17px; font-weight: 400; }
+#scenarioMiniMap { display: block; width: 100%; height: 45px; border-radius: 4px; opacity: .85; }
+.exploration-proof { display: flex; justify-content: space-between; gap: 8px; margin-top: 9px; font-size: 7px; color: #91bca8; }
+.exploration-proof span:last-child { color: #879c94; }
+.exploration-summary p { margin: 7px 0 0; font-size: 8px; color: #6a8b7d; }
+.scenario-explorer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; background: #02070bd9; backdrop-filter: blur(15px); }
+.scenario-explorer-card { width: min(1080px, 100%); max-height: calc(100dvh - 48px); overflow: auto; padding: 26px; border: 1px solid #92b8a939; border-radius: 22px; background: #101a21; box-shadow: 0 25px 100px #0008; }
+.explorer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; margin-bottom: 24px; }
+.explorer-head h2 { margin: 7px 0; font-size: 21px; font-weight: 400; letter-spacing: -.04em; color: #d7e9e1; }
+.explorer-head h2 strong { font-size: 36px; font-weight: 400; letter-spacing: -.07em; margin-right: 7px; }
+.explorer-head p { margin: 0; color: #6d8f8b; font-size: 10px; line-height: 1.6; }
+.explorer-content { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 26px; }
+.explorer-map-panel { min-width: 0; }
+.explorer-map-caption { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 11px; color: #809d96; font-size: 9px; }
+.explorer-map-caption span:last-child { color: #607e74; }
+#scenarioMap { display: block; width: 100%; max-height: 500px; aspect-ratio: 1; border-radius: 9px; cursor: crosshair; image-rendering: pixelated; }
+.explorer-map-axis { display: flex; align-items: center; gap: 13px; padding-top: 12px; color: #809d96; font-size: 9px; }
+.explorer-spectrum { flex: 1; height: 4px; border-radius: 4px; background: linear-gradient(90deg, hsl(172 42% 18%), hsl(152 42% 55%)); }
+.explorer-inspector { padding: 15px; align-self: start; border: 1px solid #9dbbae23; border-radius: 12px; background: #0c161c; }
+#selectedScenarioId { color: #c8ebdd; font-size: 11px; font-weight: 500; overflow-wrap: anywhere; }
+.explorer-parameters { margin: 15px 0 20px; }
+.explorer-parameters > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #94b0a313; }
+.explorer-parameters span { color: #6d8b80; font-size: 9px; }
+.explorer-parameters strong { color: #b1c9be; font-size: 9px; font-weight: 400; text-align: right; }
+#applyScenarioBtn { width: 100%; }
+.explorer-disclosure { margin: 15px 0 0; color: #738e82; font-size: 9px; line-height: 1.8; }
+.explorer-batch { margin-top: 18px; padding-top: 14px; border-top: 1px solid #94b0a320; }
+.explorer-batch .sidebar-section-label { font-size: 8px; }
+#runScenarioBatchBtn { font-size: 9px; padding: 8px 9px; }
+#scenarioBatchProgress { display: block; width: 100%; height: 5px; accent-color: #99d8ba; margin-top: 12px; }
+#scenarioBatchStatus { color: #78988a; font-size: 8px; margin-top: 7px; line-height: 1.6; }
+@media (max-width: 1100px) {
+  .hc-addr-chips { display: none; }
+  .hc-brand-group { gap: 15px; }
+  .explore-header-btn { gap: 4px; margin-right: 0; }
+  .explore-header-btn strong { font-size: 14px; }
+  .explore-header-btn > span:last-child { max-width: 55px; white-space: normal; font-size: 8px; }
+}
+@media (max-width: 800px) {
+  .exploration-summary { margin-bottom: 0; grid-column: 1 / -1; }
+  .exploration-open { padding-bottom: 8px; }
+  .exploration-open b { display: inline; margin-left: 10px; }
+  #scenarioMiniMap { height: 50px; }
+  .exploration-proof { font-size: 8px; }
+  .explorer-content { grid-template-columns: 1fr; gap: 20px; }
+  .scenario-explorer { padding: 12px; align-items: flex-start; }
+  .scenario-explorer-card { padding: 17px; max-height: calc(100dvh - 24px); border-radius: 15px; }
+  .explorer-head h2 { font-size: 15px; }
+  .explorer-head h2 strong { font-size: 29px; }
+  .explorer-head p { font-size: 9px; }
+  #scenarioMap { max-height: 440px; }
+  .explorer-map-caption { font-size: 8px; }
+  .explorer-inspector { width: 100%; }
+}
+@media (max-width: 480px) {
+  .hc-right-group { flex-wrap: wrap; }
+  .explore-header-btn { flex: 1 1 100%; justify-content: center; padding: 7px 10px; }
+  .explore-header-btn strong { font-size: 20px; }
+  .explore-header-btn > span:last-child { max-width: none; white-space: nowrap; font-size: 10px; }
+  .scene-sidebar .exploration-summary { grid-column: 1; }
+  .explorer-head { gap: 8px; }
+  .explorer-head .hc-btn { font-size: 9px; padding: 7px; }
+  .explorer-map-caption { flex-wrap: wrap; gap: 5px; }
+}

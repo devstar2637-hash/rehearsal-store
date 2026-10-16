@@ -6,6 +6,11 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { sample, type Point2D, type Scene, type SceneObject, type SimResult } from './rehearsalCore.ts';
 import type { DrawWorldOptions } from './canvasRenderer.ts';
 
+export type StoreCategory = 'coffee' | 'bakery' | 'matcha' | 'wine';
+export interface ThreeDrawWorldOptions extends DrawWorldOptions {
+  categoryKey?: StoreCategory;
+}
+
 export interface ThreeView {
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
@@ -66,7 +71,7 @@ function cylinder(parent: THREE.Object3D, radius: number, height: number,
   return mesh;
 }
 
-function woodTexture() {
+function woodTexture(category: StoreCategory) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1024;
   const ctx = canvas.getContext('2d')!;
@@ -77,7 +82,8 @@ function woodTexture() {
   const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
   for (let row = 0; row < 12; row++) {
     const yy = row * 86;
-    ctx.fillStyle = `hsl(33 29% ${65 + random() * 8}%)`;
+    const lightness = category === 'wine' ? 22 : category === 'matcha' ? 76 : category === 'bakery' ? 61 : 65;
+    ctx.fillStyle = `hsl(${category === 'wine' ? 22 : 33} 29% ${lightness + random() * 8}%)`;
     ctx.fillRect(0, yy, 1024, 84);
     for (let line = 0; line < 45; line++) {
       const y = yy + random() * 84;
@@ -233,6 +239,8 @@ function createWorld(canvas: HTMLCanvasElement): WorldState {
     fabric: standard('#b8b49f'), brass: standard('#b99a61', 0.4, 0.65),
     ceramic: standard('#eee8d9', 0.25), glass: standard('#add0d6', 0.15, 0.1),
     leaves: standard('#677e53'), soil: standard('#48392d'),
+    bread: standard('#c98a42'), breadScore: standard('#f1c88e'), bottle: standard('#344b31', 0.25),
+    bottleLabel: standard('#ece3cb'), wine: standard('#703f4b', 0.22), matcha: standard('#77913d'),
     skin: standard('#d6ad8b'), walking: standard('#7c9b9d'), queue: standard('#c99b57'),
     service: standard('#9783a0'), player: standard('#437e62'),
     bulb: new THREE.MeshStandardMaterial({ color: '#fff5cc', emissive: '#ffd58a', emissiveIntensity: 1.2 }),
@@ -273,7 +281,56 @@ function plant(parent: THREE.Object3D, state: WorldState, x: number, z: number, 
   parent.add(group);
 }
 
-function buildRoom(state: WorldState, scene: Scene, theme: string) {
+function categoryPalette(state: WorldState, category: StoreCategory, theme: string) {
+  const palettes = {
+    coffee: { plaster: '#eee8da', cream: '#f5f0e7', oak: '#bd946b', walnut: '#7b5239', quartz: '#ece6d9', sage: '#82927b', fabric: '#b8b49f', brass: '#b99a61', dark: '#323932', glass: '#add0d6' },
+    bakery: { plaster: '#eac9a6', cream: '#fff0dc', oak: '#c78c52', walnut: '#9b5731', quartz: '#f5e4cb', sage: '#b77448', fabric: '#e0b785', brass: '#d2a15f', dark: '#5a4137', glass: '#c6d5d0' },
+    matcha: { plaster: '#e8e9d9', cream: '#f6f1df', oak: '#cfbc92', walnut: '#a28d60', quartz: '#dddcc6', sage: '#536b3d', fabric: '#89966c', brass: '#b4a275', dark: '#35412c', glass: '#bdcdb8' },
+    wine: { plaster: '#674449', cream: '#755754', oak: '#72503f', walnut: '#442d2c', quartz: '#54423d', sage: '#59333c', fabric: '#6f3f4c', brass: '#c09c65', dark: '#272525', glass: '#62464b' },
+  };
+  for (const [key, color] of Object.entries(palettes[category])) state.materials[key].color.set(color);
+  if (category === 'coffee') state.materials.sage.color.set(theme === 'island' ? '#b3906c' : theme === 'lounge' ? '#688c84' : '#82927b');
+  state.renderer.setClearColor(category === 'wine' ? 0x30282b : category === 'matcha' ? 0xeceee5 : category === 'bakery' ? 0xf0e5d8 : 0xf0eee8, 1);
+}
+
+function bread(parent: THREE.Object3D, state: WorldState, x: number, y: number, z: number, scale = 1) {
+  const loaf = new THREE.Group();
+  loaf.position.set(x, y, z);
+  loaf.scale.setScalar(scale);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.24, 4, 10), state.materials.bread);
+  body.rotation.z = Math.PI / 2;
+  body.scale.z = 0.85;
+  body.castShadow = true;
+  loaf.add(body);
+  for (const dx of [-0.09, 0, 0.09]) {
+    const score = rounded(loaf, 0.022, 0.012, 0.11, state.materials.breadScore, dx, 0.088, 0, 0.003);
+    score.rotation.y = -0.4;
+  }
+  parent.add(loaf);
+}
+
+function bottle(parent: THREE.Object3D, state: WorldState, x: number, y: number, z: number, scale = 1, pale = false) {
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.scale.setScalar(scale);
+  cylinder(group, 0.065, 0.26, state.materials.bottle, 0, 0.13, 0);
+  cylinder(group, 0.065, 0.065, state.materials.bottle, 0, 0.29, 0, 0.025);
+  cylinder(group, 0.025, 0.12, state.materials.bottle, 0, 0.38, 0);
+  cylinder(group, 0.027, 0.045, pale ? state.materials.breadScore : state.materials.wine, 0, 0.45, 0);
+  rounded(group, 0.1, 0.13, 0.008, state.materials.bottleLabel, 0, 0.15, 0.064, 0.006);
+  parent.add(group);
+}
+
+function teaBowl(parent: THREE.Object3D, state: WorldState, x: number, y: number, z: number, scale = 1) {
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.scale.setScalar(scale);
+  cylinder(group, 0.085, 0.12, state.materials.ceramic, 0, 0.06, 0, 0.14);
+  cylinder(group, 0.127, 0.012, state.materials.matcha, 0, 0.12, 0);
+  parent.add(group);
+}
+
+function buildRoom(state: WorldState, scene: Scene, theme: string, category: StoreCategory) {
   disposeTree(state.room, state.materials);
   disposeTree(state.airflow, state.materials);
   state.warmLights.forEach((light) => state.world.remove(light));
@@ -281,8 +338,8 @@ function buildRoom(state: WorldState, scene: Scene, theme: string) {
   state.width = scene.width;
   state.depth = scene.height;
   const m = state.materials;
-  m.sage.color.set(theme === 'island' ? '#b3906c' : theme === 'lounge' ? '#688c84' : '#82927b');
-  const floorMaterial = new THREE.MeshStandardMaterial({ map: woodTexture(), roughness: 0.8 });
+  categoryPalette(state, category, theme);
+  const floorMaterial = new THREE.MeshStandardMaterial({ map: woodTexture(category), roughness: 0.8 });
   rounded(state.room, scene.width + 0.22, 0.25, scene.height + 0.22, m.cream,
     scene.width / 2, -0.16, scene.height / 2, 0.09);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(scene.width, scene.height), floorMaterial);
@@ -296,23 +353,41 @@ function buildRoom(state: WorldState, scene: Scene, theme: string) {
   rounded(state.room, scene.width, 0.12, 0.08, m.walnut, scene.width / 2, 0.06, 0.015, 0.01);
   rounded(state.room, 0.08, 0.12, scene.height, m.walnut, 0.015, 0.06, scene.height / 2, 0.01);
   // Picture window, sill and fine vertical frames on the left elevation.
-  rounded(state.room, 0.025, 1.5, 4.9, m.glass, 0.003, 1.52, 3.7, 0.006);
+  rounded(state.room, 0.025, 1.5, 4.9, category === 'wine' ? m.walnut : m.glass, 0.003, 1.52, 3.7, 0.006);
   for (const z of [1.25, 2.9, 4.55, 6.15]) {
     rounded(state.room, 0.045, 1.6, 0.045, m.cream, 0.04, 1.52, z, 0.008);
   }
   rounded(state.room, 0.3, 0.1, 5.15, m.quartz, 0.12, 0.71, 3.7, 0.02);
   rounded(state.room, 0.06, 0.09, 5.1, m.cream, 0.04, 2.31, 3.7, 0.01);
-  // Quiet cafe details stay on the existing wall/counter footprints.
-  rounded(state.room, 2.9, 0.09, 0.22, m.walnut, 4.65, 1.7, 0.14, 0.02);
-  for (let i = 0; i < 7; i++) {
-    cylinder(state.room, 0.075, 0.17, m.ceramic, 3.55 + i * 0.33, 1.83, 0.16);
+  // Wall-only decoration changes the atmosphere without adding floor obstacles.
+  if (category === 'coffee') {
+    rounded(state.room, 2.9, 0.09, 0.22, m.walnut, 4.65, 1.7, 0.14, 0.02);
+    for (let i = 0; i < 7; i++) cylinder(state.room, 0.075, 0.17, m.ceramic, 3.55 + i * 0.33, 1.83, 0.16);
+  } else if (category === 'matcha') {
+    // Four split noren panels, mounted above the counter's existing footprint.
+    cylinder(state.room, 0.025, 2.6, m.walnut, 4.45, 2.56, 0.14).rotation.z = Math.PI / 2;
+    for (let i = 0; i < 4; i++) rounded(state.room, 0.52, 0.67, 0.025, m.sage, 3.5 + i * 0.63, 2.19, 0.14, 0.008);
+    for (let i = 0; i < 10; i++) {
+      cylinder(state.room, 0.025, 1.5, m.oak, 0.05, 1.52, 1.4 + i * 0.5);
+    }
+  } else if (category === 'bakery') {
+    rounded(state.room, 2.7, 0.84, 0.035, m.cream, 4.5, 1.88, 0.025, 0.045);
+    label(state.room, 'FRESHLY BAKED', 4.5, 1.95, 0.12, '#9b5731', 1.03);
+  } else {
+    for (const z of [2.2, 3.7, 5.2]) {
+      rounded(state.room, 0.045, 0.96, 0.78, m.brass, 0.04, 1.6, z, 0.01);
+      rounded(state.room, 0.055, 0.84, 0.66, m.sage, 0.065, 1.6, z, 0.01);
+    }
   }
-  label(state.room, 'R E H E A R S A L', 7.9, 2.08, 0.07, '#746f5c', 1.12);
+  const names = { coffee: 'R E H E A R S A L', bakery: 'B R E A D  &  B U T T E R', matcha: 'M A T C H A  S T U D I O', wine: 'N A T U R A L  W I N E' };
+  label(state.room, names[category], 7.9, 2.25, 0.07, category === 'wine' ? '#dcc6a0' : '#746f5c', 1.12);
   for (const x of [3.95, 8.55]) {
     cylinder(state.room, 0.015, 0.6, m.dark, x, 2.52, 0.85);
-    cylinder(state.room, 0.35, 0.24, m.dark, x, 2.12, 0.85, 0.16);
-    cylinder(state.room, 0.3, 0.04, m.bulb, x, 2, 0.85);
-    const light = new THREE.PointLight('#ffcf91', 3, 4, 2);
+    const pendantRadius = category === 'matcha' ? 0.26 : category === 'wine' ? 0.19 : 0.35;
+    cylinder(state.room, pendantRadius, category === 'matcha' ? 0.4 : 0.24,
+      category === 'matcha' ? m.cream : category === 'wine' ? m.brass : m.dark, x, 2.12, 0.85, pendantRadius * 0.5);
+    cylinder(state.room, pendantRadius * 0.8, 0.04, m.bulb, x, 2, 0.85);
+    const light = new THREE.PointLight(category === 'wine' ? '#ffa85d' : '#ffcf91', 3, 4, 2);
     light.position.set(x, 1.9, 0.85);
     state.warmLights.push(light);
     state.world.add(light);
@@ -329,7 +404,7 @@ function buildRoom(state: WorldState, scene: Scene, theme: string) {
     stream.computeLineDistances();
     state.airflow.add(stream);
   }
-  plant(state.room, state, 0.43, 0.45, 0.9);
+  if (category !== 'wine' && category !== 'bakery') plant(state.room, state, 0.43, 0.45, 0.9);
   for (const [key, text] of [['entrance', 'ENTRY'], ['exit', 'EXIT']] as const) {
     const point = scene[key];
     const marker = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.34, 32),
@@ -342,11 +417,120 @@ function buildRoom(state: WorldState, scene: Scene, theme: string) {
   fitCamera(state);
 }
 
-function buildFurniture(state: WorldState, object: SceneObject): Furniture {
-  const group = new THREE.Group();
+function categoryFurniture(parent: THREE.Group, state: WorldState, object: SceneObject, category: StoreCategory): boolean {
+  if (category === 'coffee') return false;
   const m = state.materials;
   const w = object.w, d = object.h;
   if (object.kind === 'desk') {
+    rounded(parent, w - 0.04, 0.94, d - 0.04, m.sage, 0, 0.47, 0, 0.045);
+    rounded(parent, w, 0.11, d, category === 'matcha' ? m.oak : m.quartz, 0, 1.015, 0, 0.045);
+    if (category === 'bakery') {
+      if (object.id.includes('pickup')) {
+        // A double-deck bread oven occupies the same pickup-counter footprint.
+        rounded(parent, w * 0.65, 0.87, d * 0.85, m.dark, -w * 0.1, 1.49, 0, 0.045);
+        for (const y of [1.32, 1.68]) {
+          rounded(parent, w * 0.55, 0.25, 0.025, m.brass, -w * 0.1, y, d * 0.43, 0.025);
+          rounded(parent, w * 0.48, 0.17, 0.03, m.walnut, -w * 0.1, y, d * 0.45, 0.018);
+          rounded(parent, w * 0.4, 0.025, 0.04, m.cream, -w * 0.1, y + 0.1, d * 0.46, 0.008);
+        }
+        for (let i = 0; i < 3; i++) bread(parent, state, w * 0.34, 1.18 + i * 0.09, 0, 0.55);
+      } else {
+        rounded(parent, w * 0.68, 0.06, d * 0.75, m.walnut, -w * 0.06, 1.1, 0, 0.025);
+        for (const x of [-0.52, -0.12, 0.3]) bread(parent, state, x, 1.23, 0, 0.8);
+        rounded(parent, 0.32, 0.32, 0.08, m.dark, w * 0.35, 1.29, 0, 0.02);
+      }
+    } else if (category === 'matcha') {
+      for (const x of [-w * 0.3, 0, w * 0.3]) {
+        rounded(parent, 0.4, 0.025, d * 0.65, m.walnut, x, 1.09, 0, 0.015);
+        teaBowl(parent, state, x, 1.11, 0, 1.05);
+      }
+      if (object.id.includes('order')) {
+        rounded(parent, 0.34, 0.44, 0.09, m.dark, w * 0.33, 1.33, -d * 0.23, 0.025);
+        rounded(parent, 0.27, 0.32, 0.012, m.glass, w * 0.33, 1.35, -d * 0.16, 0.01);
+      } else {
+        cylinder(parent, 0.07, 0.24, m.oak, w * 0.36, 1.24, -d * 0.2);
+        for (let i = 0; i < 6; i++) cylinder(parent, 0.008, 0.14, m.breadScore, w * 0.36 + Math.cos(i) * 0.04, 1.42, -d * 0.2 + Math.sin(i) * 0.04);
+      }
+    } else {
+      // Burgundy bar frontage and bottles/glasses use the existing bar AABB.
+      for (const x of [-w * 0.37, 0, w * 0.37]) {
+        rounded(parent, w * 0.27, 0.67, 0.025, m.walnut, x, 0.5, d / 2 - 0.012, 0.02);
+        bottle(parent, state, x, 1.08, -d * 0.15, 0.9, x > 0);
+      }
+      for (const x of [-w * 0.2, w * 0.2]) {
+        cylinder(parent, 0.07, 0.018, m.brass, x, 1.1, d * 0.15);
+        cylinder(parent, 0.012, 0.14, m.brass, x, 1.18, d * 0.15);
+        cylinder(parent, 0.08, 0.12, m.glass, x, 1.31, d * 0.15, 0.095);
+      }
+    }
+    return true;
+  }
+  if (object.kind === 'display') {
+    if (category === 'bakery') {
+      // Tall, open timber bread rack with three fully modeled trays.
+      for (const x of [-w / 2 + 0.05, w / 2 - 0.05]) for (const z of [-d / 2 + 0.05, d / 2 - 0.05]) {
+        rounded(parent, 0.07, 1.7, 0.07, m.walnut, x, 0.85, z, 0.015);
+      }
+      for (const y of [0.3, 0.85, 1.4]) {
+        rounded(parent, w, 0.08, d, m.oak, 0, y, 0, 0.025);
+        for (let i = 0; i < Math.floor(w / 0.45); i++) for (const z of [-d * 0.2, d * 0.2]) {
+          bread(parent, state, -w / 2 + 0.26 + i * 0.45, y + 0.13, z, 0.7);
+        }
+      }
+    } else if (category === 'matcha') {
+      // Low tea island, paper screen, ceramic bowl ceremony and bamboo canisters.
+      rounded(parent, w, 0.68, d, m.oak, 0, 0.34, 0, 0.05);
+      rounded(parent, w * 0.92, 0.035, d * 0.84, m.sage, 0, 0.71, 0, 0.02);
+      for (let i = 0; i < Math.floor(w / 0.58); i++) {
+        const x = -w / 2 + 0.35 + i * 0.58;
+        teaBowl(parent, state, x, 0.74, d * 0.15, 1.15);
+        cylinder(parent, 0.085, 0.22, m.ceramic, x, 0.84, -d * 0.2);
+        cylinder(parent, 0.09, 0.035, m.oak, x, 0.97, -d * 0.2);
+      }
+      for (let i = 0; i < Math.floor(w / 0.18); i++) rounded(parent, 0.025, 0.51, 0.02, m.walnut, -w / 2 + 0.12 + i * 0.18, 0.36, d / 2 - 0.01, 0.004);
+    } else {
+      // A freestanding wine library: columns, dark shelves and labeled bottles.
+      for (const x of [-w / 2 + 0.05, w / 2 - 0.05, 0]) rounded(parent, 0.09, 1.88, d, m.walnut, x, 0.94, 0, 0.02);
+      for (const y of [0.15, 0.71, 1.27, 1.83]) rounded(parent, w, 0.07, d, m.oak, 0, y, 0, 0.02);
+      rounded(parent, w, 1.83, 0.035, m.sage, 0, 0.94, -d / 2 + 0.02, 0.01);
+      for (const y of [0.19, 0.75, 1.31]) for (let i = 0; i < Math.floor(w / 0.25); i++) {
+        bottle(parent, state, -w / 2 + 0.15 + i * 0.25, y, d * 0.13, 0.95, i % 3 === 0);
+      }
+    }
+    return true;
+  }
+  if (object.kind === 'table' && (category === 'matcha' || category === 'wine')) {
+    const matcha = category === 'matcha';
+    const top = matcha ? 0.48 : 1.02;
+    rounded(parent, w * 0.85, 0.09, d * 0.67, m.oak, 0, top, 0, 0.09);
+    cylinder(parent, 0.055, top - 0.04, m.dark, 0, top / 2, 0);
+    cylinder(parent, Math.min(w, d) * 0.24, 0.035, m.dark, 0, 0.03, 0);
+    for (const sign of [-1, 1]) {
+      if (matcha) {
+        rounded(parent, w * 0.42, 0.13, d * 0.29, m.fabric, 0, 0.1, sign * d * 0.34, 0.06);
+      } else {
+        cylinder(parent, d * 0.16, 0.1, m.fabric, 0, 0.68, sign * d * 0.33);
+        for (const dx of [-0.08, 0.08]) cylinder(parent, 0.025, 0.62, m.brass, dx, 0.33, sign * d * 0.33);
+        const footrest = new THREE.Mesh(new THREE.TorusGeometry(d * 0.12, 0.014, 6, 16), m.brass);
+        footrest.rotation.x = Math.PI / 2;
+        footrest.position.set(0, 0.3, sign * d * 0.33);
+        parent.add(footrest);
+      }
+    }
+    if (matcha) teaBowl(parent, state, 0, top + 0.06, 0, 0.75);
+    else bottle(parent, state, 0, top + 0.06, 0, 0.65, true);
+    return true;
+  }
+  return false;
+}
+
+function buildFurniture(state: WorldState, object: SceneObject, category: StoreCategory): Furniture {
+  const group = new THREE.Group();
+  const m = state.materials;
+  const w = object.w, d = object.h;
+  if (categoryFurniture(group, state, object, category)) {
+    // Category-specific furniture above preserves the exact footprint and origin.
+  } else if (object.kind === 'desk') {
     rounded(group, w - 0.05, 0.95, d - 0.05, m.sage, 0, 0.475, 0, 0.045);
     rounded(group, w, 0.12, d, m.quartz, 0, 1.02, 0, 0.04);
     // Slatted timber front provides the architectural detail of a real fixture.
@@ -389,14 +573,11 @@ function buildFurniture(state: WorldState, object: SceneObject): Furniture {
     rounded(group, w, 0.11, d, m.quartz, 0, 0.82, 0, 0.05);
     for (let i = 0; i < Math.floor(w / 0.48); i++) {
       const x = -w / 2 + 0.32 + i * 0.47;
-      rounded(group, 0.31, 0.07, d * 0.57, m.oak, x, 0.91, 0, 0.03);
-      for (const z of [-0.12, 0.1]) {
-        const pastry = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.038, 8, 12, Math.PI * 1.55), m.brass);
-        pastry.rotation.x = Math.PI / 2;
-        pastry.position.set(x, 0.99, z);
-        pastry.castShadow = true;
-        group.add(pastry);
-      }
+      // Specialty-coffee retail bags and tins, distinct from the bakery's bread.
+      rounded(group, 0.22, 0.3, 0.16, i % 2 ? m.sage : m.cream, x, 1.03, -0.12, 0.02);
+      rounded(group, 0.12, 0.09, 0.015, m.walnut, x, 1.04, -0.029, 0.004);
+      cylinder(group, 0.07, 0.19, m.dark, x, 0.97, 0.16);
+      cylinder(group, 0.075, 0.025, m.brass, x, 1.075, 0.16);
     }
   } else {
     rounded(group, w, 0.8, d, m.plaster, 0, 0.4, 0, 0.08);
@@ -408,7 +589,7 @@ function buildFurniture(state: WorldState, object: SceneObject): Furniture {
   group.add(outline);
   group.userData.objectId = object.id;
   state.world.add(group);
-  return { group, signature: `${w}:${d}:${object.kind}`, outline };
+  return { group, signature: `${w}:${d}:${object.kind}:${category}`, outline };
 }
 
 function updateRoute(state: WorldState, result: SimResult | null | undefined, proposed: boolean) {
@@ -422,9 +603,9 @@ function updateRoute(state: WorldState, result: SimResult | null | undefined, pr
   state.route.add(line);
 }
 
-export function drawWorldCanvas(options: DrawWorldOptions): ThreeView {
+export function drawWorldCanvas(options: ThreeDrawWorldOptions): ThreeView {
   const { canvas, scene, result, currentTimeSec, selectedObjectId, hoveredObjectId,
-    worldIndex, playerPos, walkMode, lightsOn = true, acOn = true, themeKey = 'express' } = options;
+    worldIndex, playerPos, walkMode, lightsOn = true, acOn = true, themeKey = 'express', categoryKey = 'coffee' } = options;
   const state = worlds.get(canvas) || createWorld(canvas);
   const bounds = canvas.getBoundingClientRect();
   const width = Math.max(1, Math.round(bounds.width));
@@ -437,9 +618,9 @@ export function drawWorldCanvas(options: DrawWorldOptions): ThreeView {
     state.camera.updateProjectionMatrix();
     fitCamera(state);
   }
-  const roomKey = `${scene.width}:${scene.height}:${themeKey}`;
+  const roomKey = `${scene.width}:${scene.height}:${themeKey}:${categoryKey}`;
   if (roomKey !== state.roomKey) {
-    buildRoom(state, scene, themeKey);
+    buildRoom(state, scene, themeKey, categoryKey);
     state.roomKey = roomKey;
   }
   const activeIds = new Set(scene.objects.map((object) => object.id));
@@ -451,13 +632,13 @@ export function drawWorldCanvas(options: DrawWorldOptions): ThreeView {
   }
   for (const object of scene.objects) {
     let item = state.furniture.get(object.id);
-    const signature = `${object.w}:${object.h}:${object.kind}`;
+    const signature = `${object.w}:${object.h}:${object.kind}:${categoryKey}`;
     if (!item || item.signature !== signature) {
       if (item) {
         state.world.remove(item.group);
         disposeTree(item.group, state.materials);
       }
-      item = buildFurniture(state, object);
+      item = buildFurniture(state, object, categoryKey);
       state.furniture.set(object.id, item);
     }
     item.group.position.set(object.x + object.w / 2, 0, object.y + object.h / 2);
@@ -480,15 +661,17 @@ export function drawWorldCanvas(options: DrawWorldOptions): ThreeView {
   });
   state.player.visible = walkMode;
   if (walkMode) state.player.position.set(playerPos.x, 0, playerPos.y);
-  state.keyLight.intensity = lightsOn ? 4.3 : 0.7;
-  state.ambient.intensity = lightsOn ? 2.3 : 0.85;
-  state.warmLights.forEach((light) => { light.intensity = lightsOn ? 3 : 0; });
+  const wine = categoryKey === 'wine';
+  state.keyLight.intensity = lightsOn ? wine ? 2 : 4.3 : 0.7;
+  state.ambient.intensity = lightsOn ? wine ? 1.3 : 2.3 : 0.85;
+  state.warmLights.forEach((light) => { light.intensity = lightsOn ? wine ? 6 : 3 : 0; });
   state.materials.bulb.emissiveIntensity = lightsOn ? 1.2 : 0;
   state.airflow.visible = acOn;
   state.controls.update();
   state.renderer.render(state.world, state.camera);
   canvas.dataset.people = String(people.length);
   canvas.dataset.webglDrawCalls = String(state.renderer.info.render.calls);
+  canvas.dataset.category = categoryKey;
   return state;
 }
 
