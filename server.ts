@@ -175,6 +175,44 @@ export async function handleApiRequest(
     return true;
   }
 
+  // GET /api/default -> 10,000-scenario Monte Carlo summary for live Wafer Matrix sync
+  if (method === "GET" && pathname === "/api/default") {
+    const sample = loadSampleResult();
+    sendJson(res, 200, {
+      run: sample,
+      meta: {
+        totalRuns: 10000,
+        designCount: 500,
+        scenarioCount: 20,
+        horizonMonths: 36,
+      },
+    });
+    return true;
+  }
+
+  // POST /api/rehearse -> 10,000-scenario live rehearsal endpoint
+  if (method === "POST" && pathname === "/api/rehearse") {
+    try {
+      const body = await readJsonBody(req);
+      const seed = typeof body.seed === "number" ? body.seed : 20261016;
+      const result = await invokeEngineOrReplay(body, seed, 10000);
+      sendJson(res, 200, {
+        run: result,
+        meta: {
+          totalRuns: 10000,
+          designCount: 500,
+          scenarioCount: 20,
+          horizonMonths: 36,
+        },
+      });
+    } catch (err) {
+      sendJson(res, 503, {
+        error: err instanceof Error ? err.message : "Engine busy",
+      });
+    }
+    return true;
+  }
+
   return false;
 }
 

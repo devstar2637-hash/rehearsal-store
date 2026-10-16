@@ -1432,10 +1432,12 @@ button:disabled {
   }
   .rea-two-col,
   .rea-rule-strip,
-  .compare {
+  .compare,
+  .tenk-body {
     grid-template-columns: 1fr;
   }
-  .rea-fine-bar {
+  .rea-fine-bar,
+  .tenk-kpi-strip {
     grid-template-columns: repeat(2, 1fr);
   }
   .pgrun-hint {
@@ -1489,5 +1491,293 @@ button:disabled {
     padding: 10px;
   }
 }
+
+/* ==========================================================================
+   LIVE 10,000-STORE PARALLEL MONTE CARLO WAFER MATRIX COMMAND CENTER
+   ========================================================================== */
+.tenk-command-shell {
+  background: #121316;
+  border: 1px solid #27272a;
+  border-radius: 14px;
+  padding: 16px 18px;
+  color: #f4f4f5;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.tenk-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #27272a;
+}
+
+.tenk-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tenk-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(234, 88, 12, 0.16);
+  border: 1px solid #ea580c;
+  color: #fb923c;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tenk-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ea580c;
+  box-shadow: 0 0 8px #ea580c;
+}
+
+.tenk-title-group h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #fafafa;
+}
+
+.tenk-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tenk-mode-tabs {
+  display: inline-flex;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.tenk-mode-btn {
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.tenk-mode-btn:hover {
+  color: #f4f4f5;
+}
+
+.tenk-mode-btn.active {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.tenk-resweep-btn {
+  border: 1px solid #ea580c;
+  background: rgba(234, 88, 12, 0.14);
+  color: #fb923c;
+  border-radius: 8px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.tenk-resweep-btn:hover {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.tenk-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tenk-kpi-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tenk-kpi-card span {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a1a1aa;
+}
+
+.tenk-kpi-card strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fafafa;
+}
+
+.tenk-kpi-card strong.orange {
+  color: #fb923c;
+}
+
+.tenk-kpi-card small {
+  font-size: 11px;
+  color: #71717a;
+}
+
+.tenk-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(290px, 1fr);
+  gap: 14px;
+  margin-top: 12px;
+  align-items: stretch;
+}
+
+.tenk-canvas-wrap {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  min-height: 330px;
+}
+
+#tenKWaferCanvas {
+  display: block;
+  width: 100%;
+  height: 330px;
+  cursor: crosshair;
+}
+
+.tenk-inspector {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tenk-insp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  border-bottom: 1px solid #27272a;
+  padding-bottom: 8px;
+}
+
+.tenk-insp-id {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fafafa;
+}
+
+.tenk-insp-sub {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  color: #a1a1aa;
+  margin-top: 2px;
+}
+
+.tenk-insp-badge {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(234, 88, 12, 0.2);
+  color: #fb923c;
+  border: 1px solid #ea580c;
+  white-space: nowrap;
+}
+
+.tenk-insp-badge.failed {
+  background: rgba(127, 29, 29, 0.35);
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+.tenk-insp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tenk-insp-metric {
+  background: #121316;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+
+.tenk-insp-metric span {
+  display: block;
+  font-size: 10px;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tenk-insp-metric strong {
+  display: block;
+  margin-top: 2px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12.5px;
+  color: #f4f4f5;
+}
+
+.tenk-insp-reason {
+  background: rgba(234, 88, 12, 0.1);
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: #fed7aa;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.tenk-load-btn {
+  width: 100%;
+  border: 1px solid #ea580c;
+  background: #ea580c;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.tenk-load-btn:hover {
+  background: #c2410c;
+}
+
 
 
